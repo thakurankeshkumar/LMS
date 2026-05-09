@@ -9,6 +9,9 @@ export default function Input({
   required = false,
   disabled = false,
   className = '',
+  min,
+  max,
+  step,
 }) {
   return (
     <input
@@ -19,7 +22,10 @@ export default function Input({
       name={name}
       required={required}
       disabled={disabled}
-      className={`w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none transition-colors ${className}`}
+      min={min}
+      max={max}
+      step={step}
+      className={`w-full rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 shadow-sm transition-colors placeholder:text-slate-500 focus:border-sky-400 focus-ring disabled:bg-slate-900 disabled:text-slate-500 ${className}`}
     />
   );
 }

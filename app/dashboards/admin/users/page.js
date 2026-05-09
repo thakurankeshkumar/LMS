@@ -10,6 +10,8 @@ import Modal from '@/app/components/Modal';
 import Card from '@/app/components/Card';
 import Loading from '@/app/components/Loading';
 import Alert from '@/app/components/Alert';
+import { useConfirmDialog, useToast } from '@/app/components/Feedback';
+import { Badge, EmptyState, PageHeader } from '@/app/components/DashboardUI';
 
 export default function AdminUsers() {
   const { data: session, status } = useSession();
@@ -24,6 +26,8 @@ export default function AdminUsers() {
     password: '',
     role: 'student',
   });
+  const { notify, Toast } = useToast();
+  const { confirm: openConfirm, ConfirmDialog } = useConfirmDialog();
 
   useEffect(() => {
     if (status === 'loading') {
@@ -75,7 +79,7 @@ export default function AdminUsers() {
         setUsers([...users, data.user]);
         setFormData({ name: '', email: '', password: '', role: 'student' });
         setShowModal(false);
-        alert('User added successfully');
+        notify('User added successfully');
       } else {
         setError(data.message || 'Failed to add user');
       }
@@ -86,7 +90,14 @@ export default function AdminUsers() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    const user = users.find((item) => item._id === userId);
+    const shouldDelete = await openConfirm({
+      title: 'Delete user?',
+      message: `This will permanently remove ${user?.name || 'this user'} and their access to the LMS.`,
+      confirmLabel: 'Delete user',
+      variant: 'danger',
+    });
+    if (!shouldDelete) return;
 
     try {
       const response = await fetch(`/api/users/${userId}`, {
@@ -95,7 +106,7 @@ export default function AdminUsers() {
 
       if (response.ok) {
         setUsers(users.filter((u) => u._id !== userId));
-        alert('User deleted successfully');
+        notify('User deleted successfully');
       } else {
         setError('Failed to delete user');
       }
@@ -105,79 +116,121 @@ export default function AdminUsers() {
     }
   };
 
+  const handleToggleUserStatus = async (targetUser) => {
+    const nextActiveState = !targetUser.isActive;
+    const shouldUpdate = await openConfirm({
+      title: nextActiveState ? 'Unblock user?' : 'Block user?',
+      message: nextActiveState
+        ? `${targetUser.name} will regain LMS access.`
+        : `${targetUser.name} will be blocked from dashboards, tests, submissions, and LMS operations.`,
+      confirmLabel: nextActiveState ? 'Unblock user' : 'Block user',
+      variant: nextActiveState ? 'success' : 'warning',
+    });
+    if (!shouldUpdate) return;
+
+    try {
+      const response = await fetch(`/api/users/${targetUser._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: nextActiveState }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUsers(users.map((user) => (user._id === targetUser._id ? data.user : user)));
+        notify(`User ${nextActiveState ? 'unblocked' : 'blocked'} successfully`);
+      } else {
+        setError(data.message || 'Failed to update user status');
+      }
+    } catch (err) {
+      setError('Failed to update user status');
+      console.error(err);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return <Loading />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="admin" />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Manage Users</h1>
-            <p className="text-gray-400">Add, edit, and delete users</p>
-          </div>
-          <Button onClick={() => setShowModal(true)}>+ Add User</Button>
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <PageHeader
+          eyebrow="Admin control"
+          title="Manage Users"
+          description="Create staff accounts, block or unblock access, review role coverage, and remove users who should no longer exist."
+          action={<Button onClick={() => setShowModal(true)}>+ Add User</Button>}
+        />
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {users.length === 0 ? (
+          <EmptyState title="No users found" description="Add a student, teacher, or admin account to begin operating the LMS." action={<Button onClick={() => setShowModal(true)}>Add User</Button>} />
+        ) : (
+        <Card className="p-0">
+          <div className="table-scroll">
+          <table className="w-full min-w-195">
             <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-4 px-4 text-gray-400">Name</th>
-                <th className="text-left py-4 px-4 text-gray-400">Email</th>
-                <th className="text-left py-4 px-4 text-gray-400">Role</th>
-                <th className="text-left py-4 px-4 text-gray-400">Status</th>
-                <th className="text-left py-4 px-4 text-gray-400">Joined</th>
-                <th className="text-left py-4 px-4 text-gray-400">Action</th>
+              <tr className="border-b border-slate-800 bg-slate-950/55">
+                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Name</th>
+                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Email</th>
+                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Role</th>
+                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Status</th>
+                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Joined</th>
+                <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user._id} className="border-b border-gray-700 hover:bg-gray-800">
-                  <td className="py-4 px-4 text-white">{user.name}</td>
-                  <td className="py-4 px-4 text-white">{user.email}</td>
+                <tr key={user._id} className="border-b border-slate-800 hover:bg-slate-950/55">
+                  <td className="py-4 px-4 text-slate-100">{user.name}</td>
+                  <td className="py-4 px-4 text-slate-100">{user.email}</td>
                   <td className="py-4 px-4">
-                    <span className="px-3 py-1 rounded-lg bg-gray-700 text-gray-300 text-sm font-semibold capitalize">
-                      {user.role}
-                    </span>
+                    <Badge tone={user.role === 'admin' ? 'blue' : user.role === 'teacher' ? 'teal' : 'slate'}>{user.role}</Badge>
                   </td>
                   <td className="py-4 px-4">
-                    <span
-                      className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                        user.isActive
-                          ? 'bg-green-900 text-green-200'
-                          : 'bg-red-900 text-red-200'
-                      }`}
-                    >
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    <Badge tone={user.isActive ? 'green' : 'red'}>{user.isActive ? 'Active' : 'Inactive'}</Badge>
                   </td>
-                  <td className="py-4 px-4 text-gray-400">
+                  <td className="py-4 px-4 text-slate-400">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-4 px-4">
+                    <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleToggleUserStatus(user)}
+                      disabled={user._id === session.user.id}
+                      className={`rounded-md px-3 py-2 text-sm font-semibold focus-ring disabled:cursor-not-allowed disabled:opacity-45 ${
+                        user.isActive
+                          ? 'text-amber-200 hover:bg-amber-400/10'
+                          : 'text-emerald-200 hover:bg-emerald-400/10'
+                      }`}
+                    >
+                      {user.isActive ? 'Block' : 'Unblock'}
+                    </button>
                     <button
                       onClick={() => handleDeleteUser(user._id)}
-                      className="text-red-500 hover:text-red-400"
+                      disabled={user._id === session.user.id}
+                      className="rounded-md px-3 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-400/10 focus-ring disabled:cursor-not-allowed disabled:opacity-45"
                     >
                       Delete
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </Card>
+        )}
 
         <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Add New User">
           <form onSubmit={handleAddUser} className="space-y-4">
             <div>
-              <label className="block text-gray-300 text-sm mb-2">Name</label>
+              <label className="block text-slate-300 text-sm mb-2">Name</label>
               <Input
                 type="text"
                 placeholder="Full name"
@@ -188,7 +241,7 @@ export default function AdminUsers() {
             </div>
 
             <div>
-              <label className="block text-gray-300 text-sm mb-2">Email</label>
+              <label className="block text-slate-300 text-sm mb-2">Email</label>
               <Input
                 type="email"
                 placeholder="email@example.com"
@@ -199,7 +252,7 @@ export default function AdminUsers() {
             </div>
 
             <div>
-              <label className="block text-gray-300 text-sm mb-2">Password</label>
+              <label className="block text-slate-300 text-sm mb-2">Password</label>
               <Input
                 type="password"
                 placeholder="••••••••"
@@ -210,11 +263,11 @@ export default function AdminUsers() {
             </div>
 
             <div>
-              <label className="block text-gray-300 text-sm mb-2">Role</label>
+              <label className="block text-slate-300 text-sm mb-2">Role</label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 shadow-sm focus:border-blue-500 focus-ring"
               >
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
@@ -232,6 +285,8 @@ export default function AdminUsers() {
             </div>
           </form>
         </Modal>
+        <ConfirmDialog />
+        <Toast />
       </main>
     </div>
   );

@@ -2,8 +2,8 @@
 
 export default function Card({ children, className = '' }) {
   return (
-    <div className={`bg-gray-800 border border-gray-700 rounded-lg p-6 ${className}`}>
+    <section className={`rounded-lg border border-slate-800/80 bg-slate-900/78 p-5 shadow-xl shadow-black/15 backdrop-blur ${className}`}>
       {children}
-    </div>
+    </section>
   );
 }

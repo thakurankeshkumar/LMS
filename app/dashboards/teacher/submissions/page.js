@@ -63,63 +63,63 @@ export default function TeacherSubmissions() {
   const approvedSubmissions = submissions.filter((s) => s.isApproved);
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="teacher" />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Submissions</h1>
-          <p className="text-gray-400">Review and approve student submissions</p>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">Submissions</h1>
+          <p className="text-slate-400">Review and approve student submissions</p>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         {/* Pending Submissions */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-4">
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">
             Pending Approval ({pendingSubmissions.length})
           </h2>
 
           {pendingSubmissions.length === 0 ? (
             <Card>
-              <p className="text-gray-400 text-center py-8">No pending submissions</p>
+              <p className="text-slate-400 text-center py-8">No pending submissions</p>
             </Card>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-4 px-4 text-gray-400">Student</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Test</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Score</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Percentage</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Submitted</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Action</th>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left py-4 px-4 text-slate-400">Student</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Test</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Score</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Percentage</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Submitted</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pendingSubmissions.map((submission) => {
                     const isPassed = getIsPassed(submission);
-                    return <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
-                      <td className="py-4 px-4 text-white">{submission.studentId.name}</td>
-                      <td className="py-4 px-4 text-white">{submission.testId?.title || '—'}</td>
-                      <td className="py-4 px-4 text-white">
+                    return <tr key={submission._id} className="border-b border-slate-800 hover:bg-slate-900">
+                      <td className="py-4 px-4 text-slate-100">{submission.studentId.name}</td>
+                      <td className="py-4 px-4 text-slate-100">{submission.testId?.title || '—'}</td>
+                      <td className="py-4 px-4 text-slate-100">
                         {submission.score}/{submission.totalMarks}
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
+                          className={`font-semibold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}
                         >
                           {submission.percentage.toFixed(2)}%
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-gray-400">
+                      <td className="py-4 px-4 text-slate-400">
                         {new Date(submission.submittedAt).toLocaleDateString()}
                       </td>
                       <td className="py-4 px-4">
                         <Link
                           href={`/dashboards/teacher/submissions/${submission._id}`}
-                          className="text-blue-500 hover:text-blue-400"
+                          className="text-sky-300 hover:text-blue-400"
                         >
                           Review
                         </Link>
@@ -134,43 +134,43 @@ export default function TeacherSubmissions() {
 
         {/* Approved Submissions */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">
             Approved ({approvedSubmissions.length})
           </h2>
 
           {approvedSubmissions.length === 0 ? (
             <Card>
-              <p className="text-gray-400 text-center py-8">No approved submissions</p>
+              <p className="text-slate-400 text-center py-8">No approved submissions</p>
             </Card>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-4 px-4 text-gray-400">Student</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Test</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Score</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Percentage</th>
-                    <th className="text-left py-4 px-4 text-gray-400">Approved On</th>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left py-4 px-4 text-slate-400">Student</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Test</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Score</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Percentage</th>
+                    <th className="text-left py-4 px-4 text-slate-400">Approved On</th>
                   </tr>
                 </thead>
                 <tbody>
                   {approvedSubmissions.map((submission) => {
                     const isPassed = getIsPassed(submission);
-                    return <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
-                      <td className="py-4 px-4 text-white">{submission.studentId.name}</td>
-                      <td className="py-4 px-4 text-white">{submission.testId?.title || '—'}</td>
-                      <td className="py-4 px-4 text-white">
+                    return <tr key={submission._id} className="border-b border-slate-800 hover:bg-slate-900">
+                      <td className="py-4 px-4 text-slate-100">{submission.studentId.name}</td>
+                      <td className="py-4 px-4 text-slate-100">{submission.testId?.title || '—'}</td>
+                      <td className="py-4 px-4 text-slate-100">
                         {submission.score}/{submission.totalMarks}
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
+                          className={`font-semibold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}
                         >
                           {submission.percentage.toFixed(2)}%
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-gray-400">
+                      <td className="py-4 px-4 text-slate-400">
                         {new Date(submission.approvalDate).toLocaleDateString()}
                       </td>
                     </tr>;

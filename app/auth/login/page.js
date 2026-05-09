@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
@@ -13,6 +13,27 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [publicSignup, setPublicSignup] = useState(false);
+  const [signupNotice, setSignupNotice] = useState('');
+  const [supportEmail, setSupportEmail] = useState('');
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/users/config');
+        const data = await response.json();
+        if (response.ok) {
+          setPublicSignup(data.config?.publicSignup ?? true);
+          setSignupNotice(data.config?.signupNotice || '');
+          setSupportEmail(data.config?.supportEmail || '');
+        }
+      } catch {
+        setPublicSignup(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,7 +52,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        setError(result.error.includes('deactivated') ? 'Your account is blocked. Contact an administrator.' : 'Invalid email or password');
         return;
       }
 
@@ -56,19 +77,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">LMS Login</h1>
+    <div className="min-h-screen app-surface flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl sm:p-8">
+        <Link href="/" className="mx-auto mb-6 flex size-12 items-center justify-center rounded-md bg-sky-400 text-sm font-black text-slate-950">
+          LMS
+        </Link>
+        <h1 className="text-center text-3xl font-bold text-slate-100">Welcome back</h1>
+        <p className="mb-6 mt-2 text-center text-sm text-slate-400">Sign in to continue to your role dashboard.</p>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-300 mb-2">Email</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-300">Email</label>
             <Input
               type="email"
               name="email"
-              placeholder="your@email.com"
+              placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
               required
@@ -76,11 +101,11 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-gray-300 mb-2">Password</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-300">Password</label>
             <Input
               type="password"
               name="password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
               required
@@ -92,23 +117,26 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="text-center text-gray-400 mt-4">
-          Don&apos;t have an account?{' '}
-          <Link href="/auth/register" className="text-blue-500 hover:text-blue-400">
-            Sign up
-          </Link>
-        </p>
-
-        <div className="mt-6 p-4 bg-gray-900 rounded border border-gray-700">
-          <p className="text-gray-400 text-sm mb-2">Demo Credentials:</p>
-          <p className="text-gray-500 text-xs">
-            Student: student@test.com / password123
-            <br />
-            Teacher: teacher@test.com / password123
-            <br />
-            Admin: admin@test.com / password123
+        {publicSignup ? (
+          <p className="mt-5 text-center text-sm text-slate-400">
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/register" className="font-semibold text-sky-300 hover:text-sky-200">
+              Sign up
+            </Link>
           </p>
-        </div>
+        ) : (
+          <p className="mt-5 rounded-lg border border-slate-800 bg-slate-950/55 px-4 py-3 text-center text-sm text-slate-400">
+            Public signup is currently disabled.
+            {supportEmail ? ` Contact ${supportEmail} for access.` : ' Please contact an administrator for access.'}
+          </p>
+        )}
+
+        {signupNotice && (
+          <div className="mt-4 rounded-lg border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm leading-6 text-sky-100">
+            {signupNotice}
+          </div>
+        )}
+
       </div>
     </div>
   );

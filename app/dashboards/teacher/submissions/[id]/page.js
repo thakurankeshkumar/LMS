@@ -9,6 +9,8 @@ import Button from '@/app/components/Button';
 import Input from '@/app/components/Input';
 import Loading from '@/app/components/Loading';
 import Alert from '@/app/components/Alert';
+import { useToast } from '@/app/components/Feedback';
+import { PageHeader, StatCard } from '@/app/components/DashboardUI';
 
 export default function ReviewSubmissionPage({ params }) {
   const { id } = use(params);
@@ -21,6 +23,7 @@ export default function ReviewSubmissionPage({ params }) {
   const [approving, setApproving] = useState(false);
   const [error, setError] = useState('');
   const [remarks, setRemarks] = useState('');
+  const { notify, Toast } = useToast();
 
   useEffect(() => {
     if (status === 'loading') {
@@ -81,8 +84,8 @@ export default function ReviewSubmissionPage({ params }) {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Submission approved successfully');
-        router.push('/dashboards/teacher/submissions');
+        notify('Submission approved successfully');
+        window.setTimeout(() => router.push('/dashboards/teacher/submissions'), 700);
       } else {
         setError(data.message || 'Failed to approve submission');
       }
@@ -102,60 +105,41 @@ export default function ReviewSubmissionPage({ params }) {
   const isPassed = submission ? (typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks) : false;
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="teacher" />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {error && <Alert type="error" message={error} />}
 
         {submission && test && (
           <>
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Review Submission</h1>
-              <p className="text-gray-400">
-                {submission.studentId.name} - {submission.testId?.title || '—'}
-              </p>
-            </div>
+            <PageHeader
+              eyebrow="Submission review"
+              title="Review Submission"
+              description={`${submission.studentId.name} - ${submission.testId?.title || 'Untitled test'}`}
+            />
 
             {/* Score Card */}
-            <Card className="mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
-                <div>
-                  <p className="text-gray-400 text-sm mb-2">Score</p>
-                  <p className="text-3xl font-bold text-blue-500">{submission.score}/{submission.totalMarks}</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm mb-2">Percentage</p>
-                  <p className={`text-3xl font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
-                    {submission.percentage.toFixed(2)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm mb-2">Result</p>
-                  <p className={`text-lg font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
-                    {isPassed ? 'PASSED' : 'FAILED'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm mb-2">Time Taken</p>
-                  <p className="text-white font-semibold">{(submission.timeTaken / 60).toFixed(2)} min</p>
-                </div>
+            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Score" value={`${submission.score}/${submission.totalMarks}`} tone="blue" />
+              <StatCard label="Percentage" value={`${submission.percentage.toFixed(2)}%`} tone={isPassed ? 'green' : 'red'} />
+              <StatCard label="Result" value={isPassed ? 'Passed' : 'Failed'} tone={isPassed ? 'green' : 'red'} />
+              <StatCard label="Time Taken" value={`${(submission.timeTaken / 60).toFixed(2)} min`} tone="slate" />
               </div>
-            </Card>
 
             {/* Answers */}
             <Card className="mb-8">
-              <h2 className="text-xl font-bold text-white mb-6">Answers</h2>
+              <h2 className="text-xl font-bold text-slate-100 mb-6">Answers</h2>
 
               {submission.answers.map((answer, index) => {
                 const question = test.questions[index];
                 const isCorrect = answer.isCorrect;
 
                 return (
-                  <div key={index} className="mb-6 pb-6 border-b border-gray-700 last:border-b-0">
+                  <div key={index} className="mb-6 pb-6 border-b border-slate-800 last:border-b-0">
                     <div className="mb-3">
-                      <p className="text-gray-400 text-sm">Question {index + 1}</p>
-                      <p className="text-white font-semibold">{question.question}</p>
+                      <p className="text-slate-400 text-sm">Question {index + 1}</p>
+                      <p className="text-slate-100 font-semibold">{question.question}</p>
                     </div>
 
                     <div className="space-y-2 mb-3">
@@ -169,7 +153,7 @@ export default function ReviewSubmissionPage({ params }) {
                                 : 'border-red-500 bg-red-900 bg-opacity-20'
                               : optionIndex === question.correctAnswer
                               ? 'border-green-500 bg-green-900 bg-opacity-10'
-                              : 'border-gray-600 bg-gray-700'
+                              : 'border-slate-700 bg-slate-950/55'
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -181,21 +165,21 @@ export default function ReviewSubmissionPage({ params }) {
                                     : 'text-red-400'
                                   : optionIndex === question.correctAnswer
                                   ? 'text-green-400'
-                                  : 'text-gray-400'
+                                  : 'text-slate-400'
                               }`}
                             >
                               {optionIndex === answer.selectedOption && '👤'} {optionIndex === question.correctAnswer && '✓'}
                             </span>
-                            <span className="text-white">{option}</span>
+                            <span className="text-slate-100">{option}</span>
                           </div>
                         </div>
                       ))}
                     </div>
 
                     {question.explanation && (
-                      <div className="bg-gray-700 p-3 rounded-lg">
-                        <p className="text-gray-400 text-sm">Explanation:</p>
-                        <p className="text-white">{question.explanation}</p>
+                      <div className="bg-slate-950/55 p-3 rounded-lg">
+                        <p className="text-slate-400 text-sm">Explanation:</p>
+                        <p className="text-slate-100">{question.explanation}</p>
                       </div>
                     )}
                   </div>
@@ -206,15 +190,15 @@ export default function ReviewSubmissionPage({ params }) {
             {/* Approval Section */}
             {!submission.isApproved && (
               <Card>
-                <h2 className="text-xl font-bold text-white mb-4">Approve Submission</h2>
+                <h2 className="text-xl font-bold text-slate-100 mb-4">Approve Submission</h2>
 
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-2">Remarks (Optional)</label>
+                  <label className="block text-slate-300 mb-2">Remarks (Optional)</label>
                   <textarea
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
                     placeholder="Add any remarks or feedback for the student..."
-                    className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none min-h-24"
+                    className="w-full px-4 py-2 bg-slate-900 text-slate-100 border border-slate-800 rounded-lg focus:border-blue-500 focus-ring min-h-24"
                   />
                 </div>
 
@@ -242,15 +226,16 @@ export default function ReviewSubmissionPage({ params }) {
               <Card>
                 <div className="text-center">
                   <p className="text-green-400 font-semibold mb-2">✓ Already Approved</p>
-                  <p className="text-gray-400">Approved on {new Date(submission.approvalDate).toLocaleDateString()}</p>
+                  <p className="text-slate-400">Approved on {new Date(submission.approvalDate).toLocaleDateString()}</p>
                   {submission.remarks && (
-                    <p className="text-gray-300 mt-4">{submission.remarks}</p>
+                    <p className="text-slate-300 mt-4">{submission.remarks}</p>
                   )}
                 </div>
               </Card>
             )}
           </>
         )}
+        <Toast />
       </main>
     </div>
   );

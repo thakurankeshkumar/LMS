@@ -8,6 +8,9 @@ import TestCard from '@/app/components/TestCard';
 import Button from '@/app/components/Button';
 import Loading from '@/app/components/Loading';
 import Alert from '@/app/components/Alert';
+import Modal from '@/app/components/Modal';
+import { useConfirmDialog, useToast } from '@/app/components/Feedback';
+import { EmptyState, PageHeader } from '@/app/components/DashboardUI';
 
 export default function TeacherTests() {
   const { data: session, status } = useSession();
@@ -20,6 +23,8 @@ export default function TeacherTests() {
   const [students, setStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [assignLoading, setAssignLoading] = useState(false);
+  const { notify, Toast } = useToast();
+  const { confirm: openConfirm, ConfirmDialog } = useConfirmDialog();
 
   useEffect(() => {
     if (status === 'loading') {
@@ -56,7 +61,13 @@ export default function TeacherTests() {
   }, [session]);
 
   const handleDelete = async (testId) => {
-    if (!confirm('Are you sure you want to delete this test?')) return;
+    const shouldDelete = await openConfirm({
+      title: 'Delete test?',
+      message: 'This removes the test for the teacher dashboard and cannot be undone.',
+      confirmLabel: 'Delete test',
+      variant: 'danger',
+    });
+    if (!shouldDelete) return;
 
     try {
       const response = await fetch(`/api/tests/${testId}`, {
@@ -65,7 +76,7 @@ export default function TeacherTests() {
 
       if (response.ok) {
         setTests(tests.filter((t) => t._id !== testId));
-        alert('Test deleted successfully');
+        notify('Test deleted successfully');
       } else {
         setError('Failed to delete test');
       }
@@ -89,7 +100,7 @@ export default function TeacherTests() {
       if (response.ok) {
         const updatedTest = await response.json();
         setTests(tests.map((t) => (t._id === testId ? updatedTest.test : t)));
-        alert(`Test ${updatedTest.test.isPublished ? 'published' : 'unpublished'} successfully`);
+        notify(`Test ${updatedTest.test.isPublished ? 'published' : 'unpublished'} successfully`);
       } else {
         setError('Failed to update test');
       }
@@ -134,7 +145,7 @@ export default function TeacherTests() {
         setTests(tests.map((t) => (t._id === selectedTestId ? data.test : t)));
         setShowAssignModal(false);
         setSelectedStudents([]);
-        alert('Test assigned successfully');
+        notify('Test assigned successfully');
       } else {
         setError('Failed to assign test');
       }
@@ -151,29 +162,29 @@ export default function TeacherTests() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="teacher" />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">My Tests</h1>
-            <p className="text-gray-400">Create, manage, and publish your tests</p>
-          </div>
-          <Button onClick={() => router.push('/dashboards/teacher/create-test')}>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <PageHeader
+          eyebrow="Assessment library"
+          title="My Tests"
+          description="Manage drafts, publish assessments, assign students, and keep the test catalog ready for learners."
+          action={<Button onClick={() => router.push('/dashboards/teacher/create-test')}>
             + Create Test
-          </Button>
-        </div>
+          </Button>}
+        />
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         {tests.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-lg mb-4">No tests created yet</p>
-            <Button onClick={() => router.push('/dashboards/teacher/create-test')}>
+          <EmptyState
+            title="No tests created yet"
+            description="Create the first assessment, add questions, then publish and assign it to students."
+            action={<Button onClick={() => router.push('/dashboards/teacher/create-test')}>
               Create Your First Test
-            </Button>
-          </div>
+            </Button>}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tests.map((test) => (
@@ -191,17 +202,37 @@ export default function TeacherTests() {
       </main>
 
       {/* Assignment Modal */}
-      {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full max-h-96 overflow-y-auto border border-gray-700">
-            <h2 className="text-xl font-bold text-white mb-4">Assign Test to Students</h2>
-            
-            <div className="space-y-2 mb-6 max-h-48 overflow-y-auto border border-gray-700 rounded p-3">
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setSelectedStudents([]);
+        }}
+        title="Assign Test to Students"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowAssignModal(false);
+                setSelectedStudents([]);
+              }}
+              disabled={assignLoading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAssignStudents} disabled={assignLoading}>
+              {assignLoading ? 'Assigning...' : 'Assign'}
+            </Button>
+          </div>
+        }
+      >
+            <div className="mb-4 max-h-60 space-y-2 overflow-y-auto rounded-lg border border-slate-800 p-3">
               {students.length === 0 ? (
-                <p className="text-gray-400 text-sm">No students found</p>
+                <p className="text-slate-400 text-sm">No students found</p>
               ) : (
                 students.map((student) => (
-                  <label key={student._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-700 p-2 rounded">
+                  <label key={student._id} className="flex cursor-pointer items-start gap-3 rounded-md p-3 hover:bg-slate-950/55">
                     <input
                       type="checkbox"
                       checked={selectedStudents.includes(student._id)}
@@ -212,36 +243,22 @@ export default function TeacherTests() {
                           setSelectedStudents(selectedStudents.filter((id) => id !== student._id));
                         }
                       }}
-                      className="w-4 h-4"
+                      className="mt-1 size-4"
                     />
-                    <span className="text-white text-sm">{student.name} ({student.email})</span>
+                    <span className="text-sm text-slate-100">
+                      <span className="block font-semibold">{student.name}</span>
+                      <span className="text-slate-400">{student.email}</span>
+                    </span>
                   </label>
                 ))
               )}
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowAssignModal(false);
-                  setSelectedStudents([]);
-                }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors"
-                disabled={assignLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAssignStudents}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors disabled:opacity-50"
-                disabled={assignLoading}
-              >
-                {assignLoading ? 'Assigning...' : 'Assign'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <p className="text-sm leading-6 text-slate-400">
+              Selected students will see this test in their assigned test queue.
+            </p>
+      </Modal>
+      <ConfirmDialog />
+      <Toast />
     </div>
   );
 }

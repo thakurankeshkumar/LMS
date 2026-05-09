@@ -55,7 +55,7 @@ export default function ResultPage({ params }) {
   const isPassed = submission ? (typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks) : false;
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="student" />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
@@ -64,8 +64,8 @@ export default function ResultPage({ params }) {
         {submission && (
           <>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Test Result</h1>
-              <p className="text-gray-400">{submission.testId?.title || '—'}</p>
+              <h1 className="text-3xl font-bold text-slate-100 mb-2">Test Result</h1>
+              <p className="text-slate-400">{submission.testId?.title || '—'}</p>
             </div>
 
             {!submission.isApproved && (
@@ -82,25 +82,25 @@ export default function ResultPage({ params }) {
                 <Card className="mb-8">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
                     <div>
-                      <p className="text-gray-400 text-sm mb-2">Your Score</p>
-                      <p className="text-4xl font-bold text-blue-500">{submission.score}</p>
-                      <p className="text-gray-400 text-sm">/ {submission.totalMarks}</p>
+                      <p className="text-slate-400 text-sm mb-2">Your Score</p>
+                      <p className="text-4xl font-bold text-sky-300">{submission.score}</p>
+                      <p className="text-slate-400 text-sm">/ {submission.totalMarks}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-sm mb-2">Percentage</p>
-                      <p className={`text-4xl font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                      <p className="text-slate-400 text-sm mb-2">Percentage</p>
+                      <p className={`text-4xl font-bold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}>
                         {submission.percentage.toFixed(2)}%
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-sm mb-2">Status</p>
-                      <p className="text-lg font-bold text-green-500">
+                      <p className="text-slate-400 text-sm mb-2">Status</p>
+                      <p className="text-lg font-bold text-emerald-300">
                         Approved
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-sm mb-2">Result</p>
-                      <p className={`text-lg font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                      <p className="text-slate-400 text-sm mb-2">Result</p>
+                      <p className={`text-lg font-bold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}>
                         {isPassed ? 'PASSED' : 'FAILED'}
                       </p>
                     </div>
@@ -110,9 +110,9 @@ export default function ResultPage({ params }) {
             ) : (
               <Card className="mb-8">
                 <div className="text-center py-8">
-                  <p className="text-gray-400 text-lg mb-2">Your test has been submitted successfully!</p>
-                  <p className="text-gray-500">Results will be displayed here once your teacher approves them.</p>
-                  <p className="text-gray-600 text-sm mt-4">Submitted on: {new Date(submission.submittedAt).toLocaleDateString()}</p>
+                  <p className="text-slate-400 text-lg mb-2">Your test has been submitted successfully!</p>
+                  <p className="text-slate-500">Results will be displayed here once your teacher approves them.</p>
+                  <p className="text-slate-400 text-sm mt-4">Submitted on: {new Date(submission.submittedAt).toLocaleDateString()}</p>
                 </div>
               </Card>
             )}
@@ -120,24 +120,24 @@ export default function ResultPage({ params }) {
             {/* Details */}
             {submission.isApproved && (
             <Card className="mb-8">
-              <h2 className="text-xl font-bold text-white mb-4">Details</h2>
+              <h2 className="text-xl font-bold text-slate-100 mb-4">Details</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-400">Submitted At</p>
-                  <p className="text-white font-semibold">{new Date(submission.submittedAt).toLocaleDateString()}</p>
+                  <p className="text-slate-400">Submitted At</p>
+                  <p className="text-slate-100 font-semibold">{new Date(submission.submittedAt).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400">Time Taken</p>
-                  <p className="text-white font-semibold">{(submission.timeTaken / 60).toFixed(2)} min</p>
+                  <p className="text-slate-400">Time Taken</p>
+                  <p className="text-slate-100 font-semibold">{(submission.timeTaken / 60).toFixed(2)} min</p>
                 </div>
                 <div>
-                  <p className="text-gray-400">Questions</p>
-                  <p className="text-white font-semibold">{submission.answers.length}</p>
+                  <p className="text-slate-400">Questions</p>
+                  <p className="text-slate-100 font-semibold">{submission.answers.length}</p>
                 </div>
                 {submission.isApproved && (
                   <div>
-                    <p className="text-gray-400">Approved On</p>
-                    <p className="text-white font-semibold">{new Date(submission.approvalDate).toLocaleDateString()}</p>
+                    <p className="text-slate-400">Approved On</p>
+                    <p className="text-slate-100 font-semibold">{new Date(submission.approvalDate).toLocaleDateString()}</p>
                   </div>
                 )}
               </div>
@@ -148,8 +148,8 @@ export default function ResultPage({ params }) {
               <Card>
                 {submission.isApproved && (
                   <>
-                    <h2 className="text-xl font-bold text-white mb-4">Remarks</h2>
-                    <p className="text-gray-300">{submission.remarks}</p>
+                    <h2 className="text-xl font-bold text-slate-100 mb-4">Remarks</h2>
+                    <p className="text-slate-300">{submission.remarks}</p>
                   </>
                 )}
               </Card>

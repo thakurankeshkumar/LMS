@@ -40,7 +40,10 @@ export async function POST(request) {
     let score = 0;
     const questionCount = test.questions?.length || 0;
     const questionMark = questionCount > 0 ? test.totalMarks / questionCount : 10;
-    const penaltyPerWrong = (test.negativeMarkingPercent || 0) / 100 * questionMark;
+    const rawNegativeMarking = Number(test.negativeMarkingPercent || 0);
+    const negativeMarkingPercent =
+      rawNegativeMarking > 0 && rawNegativeMarking <= 1 ? rawNegativeMarking * 100 : rawNegativeMarking;
+    const penaltyPerWrong = (negativeMarkingPercent / 100) * questionMark;
 
     const processedAnswers = answers.map((answer, index) => {
       const question = test.questions[index];

@@ -40,6 +40,30 @@ export default function CreateTestPage() {
     }
   }, [status, session, router]);
 
+  useEffect(() => {
+    const fetchDefaults = async () => {
+      try {
+        const response = await fetch('/api/users/config');
+        const data = await response.json();
+
+        if (!response.ok || !data.config) return;
+
+        setTestData((current) => ({
+          ...current,
+          duration: data.config.defaultTestDuration ?? current.duration,
+          passingMarks: data.config.defaultPassingPercentage ?? current.passingMarks,
+          negativeMarking: data.config.defaultNegativeMarking ?? current.negativeMarking,
+        }));
+      } catch {
+        // Defaults are optional; keep local fallbacks if unavailable.
+      }
+    };
+
+    if (session?.user?.role === 'teacher') {
+      fetchDefaults();
+    }
+  }, [session]);
+
   const addQuestion = () => {
     setCurrentQuestion({
       question: '',
@@ -157,7 +181,7 @@ export default function CreateTestPage() {
           questions: finalQuestions,
           totalMarks,
           passingMarks,
-          negativeMarkingPercent: testData.negativeMarking ? 0.25 : 0,
+          negativeMarkingPercent: testData.negativeMarking ? 25 : 0,
         }),
       });
 
@@ -181,13 +205,13 @@ export default function CreateTestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="teacher" />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Create Test</h1>
-          <p className="text-gray-400">Create a new test with multiple questions</p>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">Create Test</h1>
+          <p className="text-slate-400">Create a new test with multiple questions</p>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -195,11 +219,11 @@ export default function CreateTestPage() {
         <form onSubmit={handleSubmit}>
           {/* Test Info */}
           <Card className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Test Information</h2>
+            <h2 className="text-2xl font-bold text-slate-100 mb-6">Test Information</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-300 mb-2">Test Title *</label>
+                <label className="block text-slate-300 mb-2">Test Title *</label>
                 <Input
                   type="text"
                   placeholder="Enter test title"
@@ -210,18 +234,18 @@ export default function CreateTestPage() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">Description</label>
+                <label className="block text-slate-300 mb-2">Description</label>
                 <textarea
                   placeholder="Enter test description"
                   value={testData.description}
                   onChange={(e) => setTestData({ ...testData, description: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none min-h-24"
+                  className="w-full px-4 py-2 bg-slate-900 text-slate-100 border border-slate-800 rounded-lg focus:border-blue-500 focus-ring min-h-24"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-300 mb-2">Duration (Minutes) *</label>
+                  <label className="block text-slate-300 mb-2">Duration (Minutes) *</label>
                   <Input
                     type="number"
                     min="1"
@@ -233,7 +257,7 @@ export default function CreateTestPage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 mb-2">Passing Marks (%) *</label>
+                  <label className="block text-slate-300 mb-2">Passing Marks (%) *</label>
                   <Input
                     type="number"
                     min="0"
@@ -245,16 +269,16 @@ export default function CreateTestPage() {
                 </div>
               </div>
               <div>
-                <label className="inline-flex items-center text-gray-300">
+                <label className="inline-flex items-center text-slate-300">
                   <input
                     type="checkbox"
                     checked={testData.negativeMarking}
                     onChange={(e) => setTestData({ ...testData, negativeMarking: e.target.checked })}
                     className="mr-2"
                   />
-                  Enable negative marking (0.25%)
+                  Enable negative marking (25%)
                 </label>
-                <p className="text-gray-500 text-sm mt-1">Wrong answers will be penalized by 0.25% of question marks.</p>
+                <p className="text-slate-500 text-sm mt-1">Wrong answers will be penalized by 25% of each question&apos;s marks.</p>
               </div>
             </div>
           </Card>
@@ -262,19 +286,19 @@ export default function CreateTestPage() {
           {/* Questions */}
           <Card className="mb-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Questions ({questions.length})</h2>
+              <h2 className="text-2xl font-bold text-slate-100">Questions ({questions.length})</h2>
               {!currentQuestion && <Button onClick={addQuestion}>+ Add Question</Button>}
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-300 mb-2">Paste Questions JSON (Optional)</label>
+              <label className="block text-slate-300 mb-2">Paste Questions JSON (Optional)</label>
               <textarea
                 placeholder='Example: {"questions":[{"question":"2 + 2 = ?","options":["1","2","3","4"],"correctAnswer":3}]}'
                 value={jsonQuestionsInput}
                 onChange={(e) => setJsonQuestionsInput(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none min-h-28"
+                className="w-full px-4 py-2 bg-slate-900 text-slate-100 border border-slate-800 rounded-lg focus:border-blue-500 focus-ring min-h-28"
               />
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-slate-500 text-sm mt-2">
                 Supported formats: an array of questions OR an object with <code>questions</code> array.
                 Each item needs: <code>question</code>, <code>options</code> (4 items), <code>correctAnswer</code> (0-3).
               </p>
@@ -282,21 +306,21 @@ export default function CreateTestPage() {
 
             {/* Question Form */}
             {currentQuestion && (
-              <div className="bg-gray-700 p-6 rounded-lg mb-6">
+              <div className="bg-slate-950/55 p-6 rounded-lg mb-6">
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-2">Question *</label>
+                  <label className="block text-slate-300 mb-2">Question *</label>
                   <textarea
                     placeholder="Enter the question"
                     value={currentQuestion.question}
                     onChange={(e) =>
                       setCurrentQuestion({ ...currentQuestion, question: e.target.value })
                     }
-                    className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none min-h-20"
+                    className="w-full px-4 py-2 bg-slate-900 text-slate-100 border border-slate-800 rounded-lg focus:border-blue-500 focus-ring min-h-20"
                   />
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-2">Options *</label>
+                  <label className="block text-slate-300 mb-2">Options *</label>
                   <div className="space-y-2">
                     {currentQuestion.options.map((option, index) => (
                       <div key={index} className="flex gap-2">
@@ -323,14 +347,14 @@ export default function CreateTestPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-2">Explanation</label>
+                  <label className="block text-slate-300 mb-2">Explanation</label>
                   <textarea
                     placeholder="Optional: Explain the correct answer"
                     value={currentQuestion.explanation}
                     onChange={(e) =>
                       setCurrentQuestion({ ...currentQuestion, explanation: e.target.value })
                     }
-                    className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none min-h-16"
+                    className="w-full px-4 py-2 bg-slate-900 text-slate-100 border border-slate-800 rounded-lg focus:border-blue-500 focus-ring min-h-16"
                   />
                 </div>
 
@@ -353,10 +377,10 @@ export default function CreateTestPage() {
             {questions.length > 0 && (
               <div className="space-y-3">
                 {questions.map((q, index) => (
-                  <div key={index} className="p-3 bg-gray-700 rounded-lg flex justify-between items-start">
+                  <div key={index} className="p-3 bg-slate-950/55 rounded-lg flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="text-white font-semibold">Q{index + 1}. {q.question}</p>
-                      <p className="text-gray-400 text-sm mt-1">Correct Answer: {q.options[q.correctAnswer]}</p>
+                      <p className="text-slate-100 font-semibold">Q{index + 1}. {q.question}</p>
+                      <p className="text-slate-400 text-sm mt-1">Correct Answer: {q.options[q.correctAnswer]}</p>
                     </div>
                     <button
                       type="button"

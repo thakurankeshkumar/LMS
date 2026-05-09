@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/app/components/Input';
@@ -18,6 +18,30 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
+  const [publicSignup, setPublicSignup] = useState(true);
+  const [signupNotice, setSignupNotice] = useState('');
+  const [supportEmail, setSupportEmail] = useState('');
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/users/config');
+        const data = await response.json();
+        if (response.ok) {
+          setPublicSignup(data.config?.publicSignup ?? true);
+          setSignupNotice(data.config?.signupNotice || '');
+          setSupportEmail(data.config?.supportEmail || '');
+        }
+      } catch {
+        setPublicSignup(false);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,6 +49,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!publicSignup) {
+      setError('Registration is currently disabled');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -65,16 +94,31 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">Sign Up</h1>
+    <div className="min-h-screen app-surface flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl sm:p-8">
+        <Link href="/" className="mx-auto mb-6 flex size-12 items-center justify-center rounded-md bg-sky-400 text-sm font-black text-slate-950">
+          LMS
+        </Link>
+        <h1 className="text-center text-3xl font-bold text-slate-100">Create account</h1>
+        <p className="mb-6 mt-2 text-center text-sm text-slate-400">
+          {publicSignup ? 'Students can register directly. Staff accounts can be created by admins.' : 'Public signup is currently disabled.'}
+        </p>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
         {success && <Alert type="success" message={success} />}
 
+        {signupNotice && <Alert type="info" message={signupNotice} />}
+
+        {!configLoading && !publicSignup && (
+          <div className="mb-5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm leading-6 text-amber-100">
+            Registration is closed right now. Please ask an administrator to create your account.
+            {supportEmail && <span> Contact {supportEmail} for access.</span>}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-300 mb-2">Name</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-300">Name</label>
             <Input
               type="text"
               name="name"
@@ -82,11 +126,12 @@ export default function RegisterPage() {
               value={formData.name}
               onChange={handleChange}
               required
+              disabled={!publicSignup || configLoading}
             />
           </div>
 
           <div>
-            <label className="block text-gray-300 mb-2">Email</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-300">Email</label>
             <Input
               type="email"
               name="email"
@@ -94,41 +139,44 @@ export default function RegisterPage() {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={!publicSignup || configLoading}
             />
           </div>
 
           <div>
-            <label className="block text-gray-300 mb-2">Password</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-300">Password</label>
             <Input
               type="password"
               name="password"
-              placeholder="••••••••"
+              placeholder="Create a password"
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={!publicSignup || configLoading}
             />
           </div>
 
           <div>
-            <label className="block text-gray-300 mb-2">Confirm Password</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-300">Confirm Password</label>
             <Input
               type="password"
               name="confirmPassword"
-              placeholder="••••••••"
+              placeholder="Repeat your password"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
+              disabled={!publicSignup || configLoading}
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Signing up...' : 'Sign Up'}
+          <Button type="submit" disabled={loading || configLoading || !publicSignup} className="w-full">
+            {configLoading ? 'Checking signup...' : loading ? 'Signing up...' : publicSignup ? 'Sign Up' : 'Signup Disabled'}
           </Button>
         </form>
 
-        <p className="text-center text-gray-400 mt-4">
+        <p className="mt-5 text-center text-sm text-slate-400">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-blue-500 hover:text-blue-400">
+          <Link href="/auth/login" className="font-semibold text-sky-300 hover:text-sky-200">
             Login
           </Link>
         </p>

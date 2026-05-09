@@ -180,14 +180,14 @@ export default function TestPage({ params }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen app-surface">
         <Navbar role="student" />
         <main className="max-w-7xl mx-auto px-4 py-8">
           <Alert type="error" message={error} />
           <div className="mt-4">
             <button
               onClick={() => router.push('/dashboards/student/tests')}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="px-6 py-2 bg-sky-400 hover:bg-sky-300 text-slate-950 rounded-lg transition-colors"
             >
               Back to Tests
             </button>
@@ -203,10 +203,10 @@ export default function TestPage({ params }) {
 
   if (!isFullscreen) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Fullscreen Required</h2>
-          <p className="text-gray-400 mb-6">
+      <div className="min-h-screen app-surface flex items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">Fullscreen Required</h2>
+          <p className="text-slate-400 mb-6">
             This test must be taken in fullscreen mode for security reasons.
           </p>
           <Button onClick={enterFullscreen} className="w-full">
@@ -221,28 +221,28 @@ export default function TestPage({ params }) {
   const isAnswered = answers[currentQuestion] !== null;
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-gray-900 p-4">
+    <div ref={containerRef} className="min-h-screen app-surface p-4">
       {tabWarning && (
         <Alert type="warning" message="⚠️ Warning: Tab switching is not allowed during the test!" />
       )}
 
       {/* Header */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-6">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white">{test.title}</h1>
-            <p className="text-gray-400">Question {currentQuestion + 1} of {test.questions.length}</p>
+            <h1 className="text-2xl font-bold text-slate-100">{test.title}</h1>
+            <p className="text-slate-400">Question {currentQuestion + 1} of {test.questions.length}</p>
           </div>
           <div className="text-right">
-            <div className={`text-3xl font-bold ${timeLeft > 60 ? 'text-green-500' : timeLeft > 0 ? 'text-yellow-500' : 'text-red-500'}`}>
+            <div className={`text-3xl font-bold ${timeLeft > 60 ? 'text-emerald-300' : timeLeft > 0 ? 'text-amber-300' : 'text-red-500'}`}>
               {formatTime(timeLeft)}
             </div>
-            <p className="text-gray-400 text-sm">Time Remaining</p>
+            <p className="text-slate-400 text-sm">Time Remaining</p>
           </div>
         </div>
-        <div className="mt-4 bg-gray-700 rounded-full h-2">
+        <div className="mt-4 bg-slate-950/55 rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all"
+            className="bg-sky-400 h-2 rounded-full transition-all"
             style={{
               width: `${((currentQuestion + 1) / test.questions.length) * 100}%`,
             }}
@@ -251,8 +251,8 @@ export default function TestPage({ params }) {
       </div>
 
       {/* Question */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-white mb-6">{question.question}</h2>
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold text-slate-100 mb-6">{question.question}</h2>
 
         {/* Options */}
         <div className="space-y-3">
@@ -263,7 +263,7 @@ export default function TestPage({ params }) {
               className={`w-full p-4 text-left border-2 rounded-lg transition-colors ${
                 answers[currentQuestion]?.selectedOption === index
                   ? 'border-blue-500 bg-blue-900 bg-opacity-20'
-                  : 'border-gray-600 bg-gray-700 hover:border-gray-500'
+                  : 'border-slate-700 bg-slate-950/55 hover:border-slate-400'
               }`}
             >
               <div className="flex items-center">
@@ -271,14 +271,14 @@ export default function TestPage({ params }) {
                   className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
                     answers[currentQuestion]?.selectedOption === index
                       ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-500'
+                      : 'border-slate-400'
                   }`}
                 >
                   {answers[currentQuestion]?.selectedOption === index && (
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <div className="w-2 h-2 bg-slate-900 rounded-full"></div>
                   )}
                 </div>
-                <span className="text-white">{option}</span>
+                <span className="text-slate-100">{option}</span>
               </div>
             </button>
           ))}
@@ -302,10 +302,10 @@ export default function TestPage({ params }) {
               onClick={() => setCurrentQuestion(i)}
               className={`w-10 h-10 rounded-lg border transition-colors ${
                 i === currentQuestion
-                  ? 'bg-blue-600 border-blue-500 text-white'
+                  ? 'bg-sky-400 border-sky-500 text-slate-950'
                   : answers[i] !== null
-                  ? 'bg-green-600 border-green-500 text-white'
-                  : 'bg-gray-700 border-gray-600 text-gray-400'
+                  ? 'bg-green-600 border-green-500 text-slate-100'
+                  : 'bg-slate-950/55 border-slate-700 text-slate-400'
               }`}
             >
               {i + 1}
@@ -333,9 +333,9 @@ export default function TestPage({ params }) {
       {/* Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Submit Test?</h3>
-            <p className="text-gray-400 mb-6">Are you sure you want to submit your test? You cannot change your answers after submission.</p>
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-md">
+            <h3 className="text-xl font-bold text-slate-100 mb-4">Submit Test?</h3>
+            <p className="text-slate-400 mb-6">Are you sure you want to submit your test? You cannot change your answers after submission.</p>
             <div className="flex gap-4">
               <Button onClick={() => setShowConfirm(false)} variant="secondary" className="flex-1">
                 Cancel

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Navbar from '@/app/components/Navbar';
 import Card from '@/app/components/Card';
 import Loading from '@/app/components/Loading';
+import { PageHeader, QuickLink, StatCard } from '@/app/components/DashboardUI';
 
 export default function TeacherDashboard() {
   const { data: session, status } = useSession();
@@ -68,72 +69,42 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="teacher" />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Welcome, {session.user.name}!</h1>
-          <p className="text-gray-400">Manage your tests and submissions</p>
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <PageHeader
+          eyebrow="Teacher workspace"
+          title={`Welcome, ${session.user.name}!`}
+          description="Create tests, assign cohorts, publish assessments, and clear pending submissions from one place."
+        />
 
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">My Tests</p>
-                <p className="text-4xl font-bold text-blue-500">{stats.totalTests}</p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Total Submissions</p>
-                <p className="text-4xl font-bold text-green-500">{stats.totalSubmissions}</p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Pending Approval</p>
-                <p className="text-4xl font-bold text-yellow-500">{stats.pendingApproval}</p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Approved</p>
-                <p className="text-4xl font-bold text-purple-500">{stats.approved}</p>
-              </div>
-            </Card>
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="My Tests" value={stats.totalTests} tone="blue" />
+            <StatCard label="Total Submissions" value={stats.totalSubmissions} tone="green" />
+            <StatCard label="Pending Approval" value={stats.pendingApproval} tone={stats.pendingApproval ? 'amber' : 'slate'} />
+            <StatCard label="Approved" value={stats.approved} tone="teal" />
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-3">
-            <h2 className="text-2xl font-bold text-white mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link
-                href="/dashboards/teacher/tests"
-                className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
-              >
-                <p className="font-semibold">My Tests</p>
-                <p className="text-sm text-gray-400">View and manage tests</p>
-              </Link>
-              <Link
-                href="/dashboards/teacher/create-test"
-                className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
-              >
-                <p className="font-semibold">Create Test</p>
-                <p className="text-sm text-gray-400">Create a new test</p>
-              </Link>
-              <Link
-                href="/dashboards/teacher/submissions"
-                className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
-              >
-                <p className="font-semibold">Submissions</p>
-                <p className="text-sm text-gray-400">Review & approve submissions</p>
-              </Link>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_0.8fr]">
+          <Card>
+            <h2 className="mb-4 text-xl font-bold text-slate-100">Quick Actions</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <QuickLink href="/dashboards/teacher/tests" title="My Tests" description="Manage drafts, publishing, assignment, and editing." />
+              <QuickLink href="/dashboards/teacher/create-test" title="Create Test" description="Build MCQ assessments with duration, marks, and feedback." />
+              <QuickLink href="/dashboards/teacher/submissions" title="Submissions" description="Review attempts, add remarks, and approve results." />
+            </div>
+          </Card>
+          <Card>
+            <h2 className="mb-4 text-xl font-bold text-slate-100">Review Queue</h2>
+            <p className="text-sm leading-6 text-slate-400">
+              Keep pending approvals low so students get timely result visibility. Use the submissions page to triage by score, test, and approval status.
+            </p>
+            <div className="mt-5 rounded-lg bg-slate-950/55 p-4">
+              <p className="text-sm font-semibold text-slate-500">Pending workload</p>
+              <p className="mt-2 text-3xl font-black text-slate-100">{stats?.pendingApproval ?? 0}</p>
             </div>
           </Card>
         </div>

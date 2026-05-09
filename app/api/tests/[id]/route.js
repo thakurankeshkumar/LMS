@@ -70,8 +70,14 @@ export async function PATCH(request, { params }) {
       test.questions = questions;
       test.totalMarks = questions.length * 10;
     }
-    if (passingMarks) test.passingMarks = passingMarks;
-    if (negativeMarkingPercent !== undefined) test.negativeMarkingPercent = negativeMarkingPercent;
+    if (passingMarks !== undefined) test.passingMarks = passingMarks;
+    if (negativeMarkingPercent !== undefined) {
+      const parsedNegativeMarking = Number(negativeMarkingPercent || 0);
+      test.negativeMarkingPercent =
+        parsedNegativeMarking > 0 && parsedNegativeMarking <= 1
+          ? parsedNegativeMarking * 100
+          : Math.max(0, parsedNegativeMarking);
+    }
     if (isPublished !== undefined) test.isPublished = isPublished;
 
     await test.save();

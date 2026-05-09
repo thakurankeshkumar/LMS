@@ -61,46 +61,46 @@ export default function StudentResults() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="student" />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Your Results</h1>
-          <p className="text-gray-400">Approved test results</p>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">Your Results</h1>
+          <p className="text-slate-400">Approved test results</p>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         {submissions.length === 0 ? (
           <Card>
-            <p className="text-gray-400 text-center py-8">No approved results yet</p>
+            <p className="text-slate-400 text-center py-8">No approved results yet</p>
           </Card>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-4 px-4 text-gray-400">Test Name</th>
-                  <th className="text-left py-4 px-4 text-gray-400">Score</th>
-                  <th className="text-left py-4 px-4 text-gray-400">Percentage</th>
-                  <th className="text-left py-4 px-4 text-gray-400">Result</th>
-                  <th className="text-left py-4 px-4 text-gray-400">Submitted</th>
-                  <th className="text-left py-4 px-4 text-gray-400">Action</th>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left py-4 px-4 text-slate-400">Test Name</th>
+                  <th className="text-left py-4 px-4 text-slate-400">Score</th>
+                  <th className="text-left py-4 px-4 text-slate-400">Percentage</th>
+                  <th className="text-left py-4 px-4 text-slate-400">Result</th>
+                  <th className="text-left py-4 px-4 text-slate-400">Submitted</th>
+                  <th className="text-left py-4 px-4 text-slate-400">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {submissions.map((submission) => {
                   const isPassed = getIsPassed(submission);
                   return (
-                  <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
-                    <td className="py-4 px-4 text-white">{submission.testId?.title || 'Unknown Test'}</td>
-                    <td className="py-4 px-4 text-white">
+                  <tr key={submission._id} className="border-b border-slate-800 hover:bg-slate-900">
+                    <td className="py-4 px-4 text-slate-100">{submission.testId?.title || 'Unknown Test'}</td>
+                    <td className="py-4 px-4 text-slate-100">
                       {submission.score}/{submission.totalMarks}
                     </td>
                     <td className="py-4 px-4">
                       <span
-                        className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
+                        className={`font-semibold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}
                       >
                         {typeof submission.percentage === 'number' ? submission.percentage.toFixed(2) + '%' : '—'}
                       </span>
@@ -112,13 +112,13 @@ export default function StudentResults() {
                         {typeof submission.percentage === 'number' ? (isPassed ? 'PASSED' : 'FAILED') : '—'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-gray-400">
+                    <td className="py-4 px-4 text-slate-400">
                       {new Date(submission.submittedAt).toLocaleDateString()}
                     </td>
                     <td className="py-4 px-4">
                       <Link
                         href={`/dashboards/student/result/${submission._id}`}
-                        className="text-blue-500 hover:text-blue-400"
+                        className="text-sky-300 hover:text-blue-400"
                       >
                         View
                       </Link>

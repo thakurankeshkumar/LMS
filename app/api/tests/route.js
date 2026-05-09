@@ -45,6 +45,12 @@ export async function POST(request) {
     }
 
     const { title, description, duration, questions, passingMarks, negativeMarkingPercent } = await request.json();
+    const normalizedNegativeMarking = Math.max(
+      0,
+      Number(negativeMarkingPercent || 0) > 0 && Number(negativeMarkingPercent || 0) <= 1
+        ? Number(negativeMarkingPercent || 0) * 100
+        : Number(negativeMarkingPercent || 0)
+    );
 
     if (!title || !duration || !questions || questions.length === 0) {
       return new Response(
@@ -61,7 +67,7 @@ export async function POST(request) {
       teacherId: user._id,
       totalMarks: questions.length * 10,
       passingMarks: passingMarks || (questions.length * 10 * 40) / 100,
-      negativeMarkingPercent: negativeMarkingPercent || 0,
+      negativeMarkingPercent: normalizedNegativeMarking,
     });
 
     await test.save();

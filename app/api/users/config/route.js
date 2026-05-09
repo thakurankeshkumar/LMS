@@ -1,17 +1,27 @@
 import { requireAuth } from '@/lib/api-auth';
 import Config from '@/lib/models/Config';
+import dbConnect from '@/lib/db/mongodb';
+
+function serializeConfig(config) {
+  return {
+    publicSignup: config?.publicSignup ?? true,
+    maintenanceMode: config?.maintenanceMode ?? false,
+    signupNotice: config?.signupNotice ?? '',
+    supportEmail: config?.supportEmail ?? '',
+    defaultTestDuration: config?.defaultTestDuration ?? 30,
+    defaultPassingPercentage: config?.defaultPassingPercentage ?? 40,
+    defaultNegativeMarking: config?.defaultNegativeMarking ?? false,
+  };
+}
 
 export async function GET(request) {
   try {
-    const { response } = await requireAuth(['admin']);
+    await dbConnect();
 
-    if (response) {
-      return response;
-    }
+    const config = await Config.findOne();
+    const publicConfig = serializeConfig(config);
 
-    let config = await Config.findOne();
-
-    return new Response(JSON.stringify({ config }), {
+    return new Response(JSON.stringify({ config: publicConfig }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -31,19 +41,35 @@ export async function PUT(request) {
       return response;
     }
 
-    const { publicSignup } = await request.json();
+    const body = await request.json();
 
     let config = await Config.findOne();
 
     if (!config) {
-      config = new Config({ publicSignup });
-    } else {
-      config.publicSignup = publicSignup;
+      config = new Config();
+    }
+
+    const booleanFields = ['publicSignup', 'maintenanceMode', 'defaultNegativeMarking'];
+    booleanFields.forEach((field) => {
+      if (body[field] !== undefined) config[field] = Boolean(body[field]);
+    });
+
+    if (body.signupNotice !== undefined) config.signupNotice = String(body.signupNotice).slice(0, 240);
+    if (body.supportEmail !== undefined) config.supportEmail = String(body.supportEmail).trim();
+
+    if (body.defaultTestDuration !== undefined) {
+      const duration = Number(body.defaultTestDuration);
+      if (!Number.isNaN(duration)) config.defaultTestDuration = Math.min(480, Math.max(1, duration));
+    }
+
+    if (body.defaultPassingPercentage !== undefined) {
+      const passing = Number(body.defaultPassingPercentage);
+      if (!Number.isNaN(passing)) config.defaultPassingPercentage = Math.min(100, Math.max(0, passing));
     }
 
     await config.save();
 
-    return new Response(JSON.stringify({ message: 'Config updated successfully', config }), {
+    return new Response(JSON.stringify({ message: 'Config updated successfully', config: serializeConfig(config) }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

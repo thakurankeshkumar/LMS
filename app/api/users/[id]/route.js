@@ -4,7 +4,7 @@ import User from '@/lib/models/User';
 // Update user
 export async function PATCH(request, { params }) {
   try {
-    const { response } = await requireAuth(['admin']);
+    const { user: adminUser, response } = await requireAuth(['admin']);
 
     if (response) {
       return response;
@@ -13,9 +13,22 @@ export async function PATCH(request, { params }) {
     const { id } = await params;
     const { name, email, role, isActive } = await request.json();
 
+    if (adminUser._id.toString() === id && isActive === false) {
+      return new Response(JSON.stringify({ message: 'You cannot block your own admin account' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (email !== undefined) updates.email = email;
+    if (role !== undefined) updates.role = role;
+    if (isActive !== undefined) updates.isActive = isActive;
+
     const user = await User.findByIdAndUpdate(
       id,
-      { name, email, role, isActive },
+      updates,
       { new: true, runValidators: true }
     ).select('-password');
 

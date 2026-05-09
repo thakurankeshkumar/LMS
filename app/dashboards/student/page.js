@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import Card from '@/app/components/Card';
 import Loading from '@/app/components/Loading';
+import { EmptyState, PageHeader, QuickLink, StatCard } from '@/app/components/DashboardUI';
 
 export default function StudentDashboard() {
   const { data: session, status } = useSession();
@@ -67,73 +68,57 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="student" />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Welcome, {session.user.name}!</h1>
-          <p className="text-gray-400">Your learning dashboard</p>
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <PageHeader
+          eyebrow="Student workspace"
+          title={`Welcome, ${session.user.name}!`}
+          description="See assigned tests, complete pending work, and review approved results from one responsive dashboard."
+        />
 
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Assigned Tests</p>
-                <p className="text-4xl font-bold text-blue-500">{stats.assignedTests}</p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Completed</p>
-                <p className="text-4xl font-bold text-green-500">{stats.completedTests}</p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Pending</p>
-                <p className="text-4xl font-bold text-yellow-500">{stats.pendingTests}</p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Approved Results</p>
-                <p className="text-4xl font-bold text-purple-500">{stats.approvedResults}</p>
-              </div>
-            </Card>
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Assigned Tests" value={stats.assignedTests} tone="blue" />
+            <StatCard label="Completed" value={stats.completedTests} tone="green" />
+            <StatCard label="Pending" value={Math.max(stats.pendingTests, 0)} tone="amber" />
+            <StatCard label="Approved Results" value={stats.approvedResults} tone="indigo" />
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-3">
-            <h2 className="text-2xl font-bold text-white mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <a
-                href="/dashboards/student/tests"
-                className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
-              >
-                <p className="font-semibold">Take Tests</p>
-                <p className="text-sm text-gray-400">Start assigned tests</p>
-              </a>
-              <a
-                href="/dashboards/student/results"
-                className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
-              >
-                <p className="font-semibold">View Results</p>
-                <p className="text-sm text-gray-400">Check your approved results</p>
-              </a>
-              <a
-                href="/dashboards/student/history"
-                className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
-              >
-                <p className="font-semibold">Test History</p>
-                <p className="text-sm text-gray-400">View past submissions</p>
-              </a>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_0.8fr]">
+          <Card>
+            <h2 className="mb-4 text-xl font-bold text-slate-100">Quick Actions</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <QuickLink href="/dashboards/student/tests" title="Take Tests" description="Start assigned tests and continue your learning work." />
+              <QuickLink href="/dashboards/student/results" title="View Results" description="Check approved results, score, remarks, and status." />
+              <QuickLink href="/dashboards/student/history" title="Test History" description="Review past submissions and completion records." />
             </div>
+          </Card>
+          <Card>
+            <h2 className="mb-4 text-xl font-bold text-slate-100">Progress Focus</h2>
+            {stats?.assignedTests ? (
+              <div className="space-y-4">
+                <div>
+                  <div className="mb-2 flex justify-between text-sm font-semibold text-slate-400">
+                    <span>Completion</span>
+                    <span>{Math.round((stats.completedTests / Math.max(stats.assignedTests, 1)) * 100)}%</span>
+                  </div>
+                  <div className="h-3 rounded-full bg-slate-800">
+                    <div
+                      className="h-3 rounded-full bg-sky-400"
+                      style={{ width: `${Math.min(100, Math.round((stats.completedTests / Math.max(stats.assignedTests, 1)) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="text-sm leading-6 text-slate-400">
+                  Finish pending assessments first. Approved results are published after review, so your latest attempt may appear in history before results.
+                </p>
+              </div>
+            ) : (
+              <EmptyState title="No assigned tests yet" description="When a teacher assigns a published test, it will appear in your test queue." />
+            )}
           </Card>
         </div>
       </main>

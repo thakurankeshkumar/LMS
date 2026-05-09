@@ -10,55 +10,55 @@ export default function TestCard({
   isAlreadyTaken
 }) {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-blue-500 transition-colors">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-white">{test.title}</h3>
-        <div className="flex gap-2">
+    <article className="flex h-full flex-col rounded-lg border border-slate-800 bg-slate-900/78 p-5 shadow-xl shadow-black/15 transition-colors hover:border-sky-500/50">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <h3 className="text-base font-bold leading-6 text-slate-100">{test.title}</h3>
+        <div className="flex flex-wrap justify-end gap-2">
           {isAlreadyTaken && (
-            <span className="text-xs px-2 py-1 rounded bg-purple-900 text-purple-200">
+            <span className="rounded-full bg-indigo-400/12 px-2.5 py-1 text-xs font-bold text-indigo-200">
               Already Taken
             </span>
           )}
-          <span className={`text-xs px-2 py-1 rounded ${
+          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
             test.isPublished 
-              ? 'bg-green-900 text-green-200' 
-              : 'bg-yellow-900 text-yellow-200'
+              ? 'bg-emerald-400/12 text-emerald-200' 
+              : 'bg-amber-400/12 text-amber-100'
           }`}>
             {test.isPublished ? 'Published' : 'Draft'}
           </span>
         </div>
       </div>
-      <p className="text-gray-400 text-sm mb-4">{test.description || 'No description'}</p>
+      <p className="mb-5 min-h-10 text-sm leading-6 text-slate-400">{test.description || 'No description added yet.'}</p>
 
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div>
-          <span className="text-gray-500">Duration:</span>
-          <p className="text-white font-semibold">{test.duration} min</p>
+      <div className="mb-5 grid grid-cols-2 gap-3 text-sm">
+        <div className="rounded-md bg-slate-950/55 p-3">
+          <span className="text-xs font-semibold uppercase text-slate-500">Duration</span>
+          <p className="font-bold text-slate-100">{test.duration} min</p>
         </div>
-        <div>
-          <span className="text-gray-500">Questions:</span>
-          <p className="text-white font-semibold">{test.questions?.length || 0}</p>
+        <div className="rounded-md bg-slate-950/55 p-3">
+          <span className="text-xs font-semibold uppercase text-slate-500">Questions</span>
+          <p className="font-bold text-slate-100">{test.questions?.length || 0}</p>
         </div>
-        <div>
-          <span className="text-gray-500">Total Marks:</span>
-          <p className="text-white font-semibold">{test.totalMarks}</p>
+        <div className="rounded-md bg-slate-950/55 p-3">
+          <span className="text-xs font-semibold uppercase text-slate-500">Marks</span>
+          <p className="font-bold text-slate-100">{test.totalMarks}</p>
         </div>
-        <div>
-          <span className="text-gray-500">Assigned to:</span>
-          <p className="text-white font-semibold">{test.assignedStudents?.length || 0}</p>
+        <div className="rounded-md bg-slate-950/55 p-3">
+          <span className="text-xs font-semibold uppercase text-slate-500">Assigned</span>
+          <p className="font-bold text-slate-100">{test.assignedStudents?.length || 0}</p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
+      <div className="mt-auto flex flex-col gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           {onStart && (
             <button
               onClick={() => onStart(test._id)}
               disabled={isAlreadyTaken}
-              className={`flex-1 py-2 rounded-lg transition-colors text-sm ${
+              className={`min-h-10 flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors focus-ring ${
                 isAlreadyTaken
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  ? 'cursor-not-allowed bg-slate-800 text-slate-500'
+                  : 'bg-sky-400 text-slate-950 hover:bg-sky-300'
               }`}
             >
               {isAlreadyTaken ? 'Already Taken' : 'Start Test'}
@@ -67,7 +67,7 @@ export default function TestCard({
           {onEdit && (
             <button
               onClick={() => onEdit(test._id)}
-              className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors text-sm"
+              className="min-h-10 flex-1 rounded-md border border-slate-700 bg-slate-950/55 px-3 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800 focus-ring"
             >
               Edit
             </button>
@@ -75,20 +75,20 @@ export default function TestCard({
           {onDelete && (
             <button
               onClick={() => onDelete(test._id)}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors text-sm"
+              className="min-h-10 flex-1 rounded-md bg-rose-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-400 focus-ring"
             >
               Delete
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           {onPublish && (
             <button
               onClick={() => onPublish(test._id)}
-              className={`flex-1 py-2 rounded-lg transition-colors text-sm font-semibold ${
+              className={`min-h-10 flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors focus-ring ${
                 test.isPublished
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  ? 'border border-slate-700 bg-slate-950/55 text-slate-200 hover:bg-slate-800'
+                  : 'bg-teal-400 text-slate-100 hover:bg-teal-300'
               }`}
             >
               {test.isPublished ? 'Unpublish' : 'Publish'}
@@ -97,13 +97,13 @@ export default function TestCard({
           {onAssign && (
             <button
               onClick={() => onAssign(test._id)}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors text-sm font-semibold"
+              className="min-h-10 flex-1 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-white focus-ring"
             >
               Assign
             </button>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

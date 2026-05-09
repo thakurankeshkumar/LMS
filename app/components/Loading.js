@@ -2,10 +2,10 @@
 
 export default function Loading() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+    <div className="flex min-h-screen items-center justify-center app-surface">
       <div className="text-center">
-        <div className="w-12 h-12 border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-400">Loading...</p>
+        <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-slate-800 border-t-sky-400" />
+        <p className="text-sm font-semibold text-slate-300">Loading...</p>
       </div>
     </div>
   );

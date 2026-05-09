@@ -65,20 +65,20 @@ export default function StudentTests() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen app-surface">
       <Navbar role="student" />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Available Tests</h1>
-          <p className="text-gray-400">Select a test to begin</p>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">Available Tests</h1>
+          <p className="text-slate-400">Select a test to begin</p>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
         {tests.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No tests assigned yet</p>
+            <p className="text-slate-400 text-lg">No tests assigned yet</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
