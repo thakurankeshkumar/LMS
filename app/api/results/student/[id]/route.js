@@ -1,6 +1,4 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import Submission from '@/lib/models/Submission';
 import Test from '@/lib/models/Test';
 import User from '@/lib/models/User';
@@ -8,21 +6,16 @@ import User from '@/lib/models/User';
 // Get student performance analytics
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['teacher']);
 
-    if (!session || session.user.role !== 'teacher') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params; // student ID
 
     // Get all submissions for this student on tests created by this teacher
-    const tests = await Test.find({ teacherId: session.user.id });
+    const tests = await Test.find({ teacherId: user._id });
     const testIds = tests.map((t) => t._id);
 
     const submissions = await Submission.find({
@@ -35,7 +28,10 @@ export async function GET(request, { params }) {
     const student = await User.findById(id).select('name email');
 
     const totalTests = submissions.length;
-    const passedTests = submissions.filter((s) => s.score >= s.totalMarks * 0.4).length;
+    const passedTests = submissions.filter((s) => {
+      const passMarks = s.testId?.passingMarks ?? (s.totalMarks * 40) / 100;
+      return s.score >= passMarks;
+    }).length;
     const averageScore = totalTests > 0 ? submissions.reduce((sum, s) => sum + s.score, 0) / totalTests : 0;
     const averagePercentage =
       totalTests > 0 ? submissions.reduce((sum, s) => sum + s.percentage, 0) / totalTests : 0;

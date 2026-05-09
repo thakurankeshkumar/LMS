@@ -1,16 +1,12 @@
-import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response: authResponse } = await requireAuth();
 
-    if (!session) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (authResponse) {
+      return authResponse;
     }
 
     const response = NextResponse.json({

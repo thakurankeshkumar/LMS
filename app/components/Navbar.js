@@ -10,7 +10,7 @@ export default function Navbar({ role }) {
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'GET' });
     await signOut({ redirect: false });
-    router.push('/auth/login');
+    router.push('/');
   };
 
   return (

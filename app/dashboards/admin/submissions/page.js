@@ -16,8 +16,13 @@ export default function AdminSubmissions() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'admin') {
@@ -47,6 +52,11 @@ export default function AdminSubmissions() {
   if (status === 'loading' || loading) {
     return <Loading />;
   }
+
+  const getIsPassed = (submission) => {
+    const passMarks = submission?.testId?.passingMarks ?? (submission.totalMarks * 40) / 100;
+    return typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks;
+  };
 
   const pendingSubmissions = submissions.filter((s) => !s.isApproved);
   const approvedSubmissions = submissions.filter((s) => s.isApproved);
@@ -108,8 +118,9 @@ export default function AdminSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {submissions.map((submission) => (
-                    <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
+                  {submissions.map((submission) => {
+                    const isPassed = getIsPassed(submission);
+                    return <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
                       <td className="py-3 px-4 text-white">{submission.studentId.name}</td>
                       <td className="py-3 px-4 text-white">{submission.testId?.title || '—'}</td>
                       <td className="py-3 px-4 text-white">
@@ -117,22 +128,16 @@ export default function AdminSubmissions() {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`font-semibold ${
-                            submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'
-                          }`}
+                          className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
                         >
                           {submission.percentage.toFixed(1)}%
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${
-                            submission.percentage >= 40
-                              ? 'bg-green-900 text-green-200'
-                              : 'bg-red-900 text-red-200'
-                          }`}
+                          className={`px-2 py-1 rounded text-xs font-semibold ${isPassed ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}`}
                         >
-                          {submission.percentage >= 40 ? 'PASS' : 'FAIL'}
+                          {isPassed ? 'PASS' : 'FAIL'}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -149,8 +154,8 @@ export default function AdminSubmissions() {
                       <td className="py-3 px-4 text-gray-400">
                         {new Date(submission.submittedAt).toLocaleDateString()}
                       </td>
-                    </tr>
-                  ))}
+                    </tr>;
+                  })}
                 </tbody>
               </table>
             </div>

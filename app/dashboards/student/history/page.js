@@ -17,8 +17,13 @@ export default function StudentHistory() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'student') {
@@ -84,12 +89,21 @@ export default function StudentHistory() {
                       <span>Submitted: {new Date(submission.submittedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <Link
-                    href={`/dashboards/student/result/${submission._id}`}
-                    className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    View Details
-                  </Link>
+                  {submission.archived ? (
+                    <Link
+                      href={`/dashboards/student/result/archived/${submission.archiveId}`}
+                      className="ml-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      View Archived
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/dashboards/student/result/${submission._id}`}
+                      className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      View Details
+                    </Link>
+                  )}
                 </div>
               </Card>
             ))}

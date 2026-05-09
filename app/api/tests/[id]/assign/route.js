@@ -1,21 +1,14 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import Test from '@/lib/models/Test';
 
 // Assign test to students
 export async function POST(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['teacher']);
 
-    if (!session || session.user.role !== 'teacher') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const { studentIds } = await request.json();
@@ -36,7 +29,7 @@ export async function POST(request, { params }) {
       });
     }
 
-    if (test.teacherId.toString() !== session.user.id) {
+    if (test.teacherId.toString() !== user._id.toString()) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

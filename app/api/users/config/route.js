@@ -1,20 +1,13 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import Config from '@/lib/models/Config';
 
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response } = await requireAuth(['admin']);
 
-    if (!session || session.user.role !== 'admin') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     let config = await Config.findOne();
 
@@ -32,16 +25,11 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response } = await requireAuth(['admin']);
 
-    if (!session || session.user.role !== 'admin') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { publicSignup } = await request.json();
 

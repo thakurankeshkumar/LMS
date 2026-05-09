@@ -1,32 +1,25 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import Test from '@/lib/models/Test';
 
 // Get all tests for teacher or all published tests for student
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth();
 
-    if (!session) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     let tests;
 
-    if (session.user.role === 'teacher') {
-      tests = await Test.find({ teacherId: session.user.id }).populate('teacherId', 'name email');
-    } else if (session.user.role === 'student') {
+    if (user.role === 'teacher') {
+      tests = await Test.find({ teacherId: user._id }).populate('teacherId', 'name email');
+    } else if (user.role === 'student') {
       tests = await Test.find({
         isPublished: true,
-        assignedStudents: session.user.id,
+        assignedStudents: user._id,
       }).populate('teacherId', 'name email');
-    } else if (session.user.role === 'admin') {
+    } else if (user.role === 'admin') {
       tests = await Test.find().populate('teacherId', 'name email');
     }
 
@@ -45,18 +38,13 @@ export async function GET(request) {
 // Create new test (teacher)
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['teacher']);
 
-    if (!session || session.user.role !== 'teacher') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
 
-    await dbConnect();
-
-    const { title, description, duration, questions, passingMarks } = await request.json();
+    const { title, description, duration, questions, passingMarks, negativeMarkingPercent } = await request.json();
 
     if (!title || !duration || !questions || questions.length === 0) {
       return new Response(
@@ -70,9 +58,10 @@ export async function POST(request) {
       description,
       duration,
       questions,
-      teacherId: session.user.id,
+      teacherId: user._id,
       totalMarks: questions.length * 10,
       passingMarks: passingMarks || (questions.length * 10 * 40) / 100,
+      negativeMarkingPercent: negativeMarkingPercent || 0,
     });
 
     await test.save();

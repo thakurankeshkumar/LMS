@@ -17,8 +17,13 @@ export default function StudentResults() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'student') {
@@ -50,6 +55,11 @@ export default function StudentResults() {
     return <Loading />;
   }
 
+  const getIsPassed = (submission) => {
+    const passMarks = submission?.testId?.passingMarks ?? (submission.totalMarks * 40) / 100;
+    return typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks;
+  };
+
   return (
     <div className="min-h-screen bg-gray-900">
       <Navbar role="student" />
@@ -80,7 +90,9 @@ export default function StudentResults() {
                 </tr>
               </thead>
               <tbody>
-                {submissions.map((submission) => (
+                {submissions.map((submission) => {
+                  const isPassed = getIsPassed(submission);
+                  return (
                   <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
                     <td className="py-4 px-4 text-white">{submission.testId?.title || 'Unknown Test'}</td>
                     <td className="py-4 px-4 text-white">
@@ -88,22 +100,16 @@ export default function StudentResults() {
                     </td>
                     <td className="py-4 px-4">
                       <span
-                        className={`font-semibold ${
-                          (typeof submission.percentage === 'number' && submission.percentage >= 40) ? 'text-green-500' : 'text-red-500'
-                        }`}
+                        className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
                       >
                         {typeof submission.percentage === 'number' ? submission.percentage.toFixed(2) + '%' : '—'}
                       </span>
                     </td>
                     <td className="py-4 px-4">
                       <span
-                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                          (typeof submission.percentage === 'number' && submission.percentage >= 40)
-                            ? 'bg-green-900 text-green-200'
-                            : 'bg-red-900 text-red-200'
-                        }`}
+                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${isPassed ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}`}
                       >
-                        {typeof submission.percentage === 'number' ? (submission.percentage >= 40 ? 'PASSED' : 'FAILED') : '—'}
+                        {typeof submission.percentage === 'number' ? (isPassed ? 'PASSED' : 'FAILED') : '—'}
                       </span>
                     </td>
                     <td className="py-4 px-4 text-gray-400">
@@ -118,7 +124,8 @@ export default function StudentResults() {
                       </Link>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

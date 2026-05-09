@@ -23,8 +23,13 @@ export default function ReviewSubmissionPage({ params }) {
   const [remarks, setRemarks] = useState('');
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'teacher') {
@@ -93,6 +98,9 @@ export default function ReviewSubmissionPage({ params }) {
     return <Loading />;
   }
 
+  const passMarks = test?.passingMarks ?? (submission?.totalMarks ? (submission.totalMarks * 40) / 100 : 0);
+  const isPassed = submission ? (typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks) : false;
+
   return (
     <div className="min-h-screen bg-gray-900">
       <Navbar role="teacher" />
@@ -118,14 +126,14 @@ export default function ReviewSubmissionPage({ params }) {
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm mb-2">Percentage</p>
-                  <p className={`text-3xl font-bold ${submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'}`}>
+                  <p className={`text-3xl font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
                     {submission.percentage.toFixed(2)}%
                   </p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm mb-2">Result</p>
-                  <p className={`text-lg font-bold ${submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'}`}>
-                    {submission.percentage >= 40 ? 'PASSED' : 'FAILED'}
+                  <p className={`text-lg font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                    {isPassed ? 'PASSED' : 'FAILED'}
                   </p>
                 </div>
                 <div>

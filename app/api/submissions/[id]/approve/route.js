@@ -1,22 +1,15 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import Submission from '@/lib/models/Submission';
 import Test from '@/lib/models/Test';
 
 // Approve result (teacher)
 export async function POST(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['teacher']);
 
-    if (!session || session.user.role !== 'teacher') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const { remarks } = await request.json();
@@ -32,7 +25,7 @@ export async function POST(request, { params }) {
 
     // Verify teacher owns the test
     const test = await Test.findById(submission.testId);
-    if (test.teacherId.toString() !== session.user.id) {
+    if (test.teacherId.toString() !== user._id.toString()) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +34,7 @@ export async function POST(request, { params }) {
 
     submission.isApproved = true;
     submission.status = 'approved';
-    submission.approvedBy = session.user.id;
+    submission.approvedBy = user._id;
     submission.approvalDate = new Date();
     if (remarks) submission.remarks = remarks;
 

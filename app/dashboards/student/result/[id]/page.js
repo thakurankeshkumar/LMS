@@ -51,6 +51,9 @@ export default function ResultPage({ params }) {
     return <Loading />;
   }
 
+  const passMarks = submission?.testId?.passingMarks ?? (submission?.totalMarks ? (submission.totalMarks * 40) / 100 : 0);
+  const isPassed = submission ? (typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks) : false;
+
   return (
     <div className="min-h-screen bg-gray-900">
       <Navbar role="student" />
@@ -85,7 +88,7 @@ export default function ResultPage({ params }) {
                     </div>
                     <div>
                       <p className="text-gray-400 text-sm mb-2">Percentage</p>
-                      <p className={`text-4xl font-bold ${submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'}`}>
+                      <p className={`text-4xl font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
                         {submission.percentage.toFixed(2)}%
                       </p>
                     </div>
@@ -97,8 +100,8 @@ export default function ResultPage({ params }) {
                     </div>
                     <div>
                       <p className="text-gray-400 text-sm mb-2">Result</p>
-                      <p className={`text-lg font-bold ${submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'}`}>
-                        {submission.percentage >= 40 ? 'PASSED' : 'FAILED'}
+                      <p className={`text-lg font-bold ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                        {isPassed ? 'PASSED' : 'FAILED'}
                       </p>
                     </div>
                   </div>

@@ -4,12 +4,42 @@ import { NextResponse } from 'next/server';
 export async function middleware(request) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
+  const normalizedPathname = pathname !== '/' ? pathname.replace(/\/$/, '') : pathname;
 
-  // Public routes that don't require auth
-  const publicRoutes = ['/auth/login', '/auth/register', '/auth/error', '/'];
+  const publicRoutes = ['/auth/login', '/auth/register', '/auth/error'];
 
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
+  if (publicRoutes.includes(normalizedPathname)) {
+    if (!token) {
+      return NextResponse.next();
+    }
+
+    const dashboardPath =
+      token.role === 'student'
+        ? '/dashboards/student'
+        : token.role === 'teacher'
+        ? '/dashboards/teacher'
+        : token.role === 'admin'
+        ? '/dashboards/admin'
+        : '/';
+
+    return NextResponse.redirect(new URL(dashboardPath, request.url));
+  }
+
+  if (normalizedPathname === '/') {
+    if (!token) {
+      return NextResponse.next();
+    }
+
+    const dashboardPath =
+      token.role === 'student'
+        ? '/dashboards/student'
+        : token.role === 'teacher'
+        ? '/dashboards/teacher'
+        : token.role === 'admin'
+        ? '/dashboards/admin'
+        : '/';
+
+    return NextResponse.redirect(new URL(dashboardPath, request.url));
   }
 
   // Protect all other routes
@@ -18,19 +48,19 @@ export async function middleware(request) {
   }
 
   // Role-based route protection
-  if (pathname.startsWith('/dashboards/student') && token.role !== 'student') {
+  if (normalizedPathname.startsWith('/dashboards/student') && token.role !== 'student') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (pathname.startsWith('/dashboards/teacher') && token.role !== 'teacher') {
+  if (normalizedPathname.startsWith('/dashboards/teacher') && token.role !== 'teacher') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (pathname.startsWith('/dashboards/admin') && token.role !== 'admin') {
+  if (normalizedPathname.startsWith('/dashboards/admin') && token.role !== 'admin') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return NextResponse.next();
+    return NextResponse.next();
 }
 
 export const config = {

@@ -28,8 +28,13 @@ export default function TestPage({ params }) {
   const submitTestRef = useRef(null);
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'student') {

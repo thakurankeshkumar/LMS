@@ -1,21 +1,16 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import Test from '@/lib/models/Test';
+import Submission from '@/lib/models/Submission';
+import ArchivedTest from '@/lib/models/ArchivedTest';
 
 // Get single test
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response } = await requireAuth();
 
-    if (!session) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const test = await Test.findById(id).populate('teacherId', 'name email');
@@ -42,16 +37,11 @@ export async function GET(request, { params }) {
 // Update test (teacher)
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['teacher']);
 
-    if (!session || session.user.role !== 'teacher') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const test = await Test.findById(id);
@@ -63,14 +53,14 @@ export async function PATCH(request, { params }) {
       });
     }
 
-    if (test.teacherId.toString() !== session.user.id) {
+    if (test.teacherId.toString() !== user._id.toString()) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const { title, description, duration, questions, isPublished, passingMarks } =
+    const { title, description, duration, questions, isPublished, passingMarks, negativeMarkingPercent } =
       await request.json();
 
     if (title) test.title = title;
@@ -81,6 +71,7 @@ export async function PATCH(request, { params }) {
       test.totalMarks = questions.length * 10;
     }
     if (passingMarks) test.passingMarks = passingMarks;
+    if (negativeMarkingPercent !== undefined) test.negativeMarkingPercent = negativeMarkingPercent;
     if (isPublished !== undefined) test.isPublished = isPublished;
 
     await test.save();
@@ -103,16 +94,11 @@ export async function PATCH(request, { params }) {
 // Delete test (teacher)
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['teacher']);
 
-    if (!session || session.user.role !== 'teacher') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const test = await Test.findById(id);
@@ -124,16 +110,70 @@ export async function DELETE(request, { params }) {
       });
     }
 
-    if (test.teacherId.toString() !== session.user.id) {
+    if (test.teacherId.toString() !== user._id.toString()) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
+    // Gather submissions for this test and build archived stats
+    const submissions = await Submission.find({ testId: id }).populate('studentId', 'name email');
+
+    // Build per-question stats based on test.questions length
+    const questionCount = test.questions?.length || 0;
+    const questionStats = Array.from({ length: questionCount }, (_, i) => ({
+      questionIndex: i,
+      totalAttempts: 0,
+      correctCount: 0,
+    }));
+
+    const studentResults = submissions.map((s) => {
+      // count per-question stats
+      (s.answers || []).forEach((ans) => {
+        const qi = parseInt(ans.questionId, 10);
+        if (!Number.isNaN(qi) && questionStats[qi]) {
+          questionStats[qi].totalAttempts += 1;
+          if (ans.isCorrect) questionStats[qi].correctCount += 1;
+        }
+      });
+
+      return {
+        studentId: s.studentId?._id || s.studentId,
+        name: s.studentId?.name || undefined,
+        email: s.studentId?.email || undefined,
+        score: s.score,
+        totalMarks: s.totalMarks,
+        percentage: s.percentage,
+        passed: s.score >= (test.passingMarks || (test.totalMarks * 40) / 100),
+        submittedAt: s.submittedAt,
+        timeTaken: s.timeTaken,
+      };
+    });
+
+    // Save archive document
+    try {
+      const archived = new ArchivedTest({
+        originalTestId: test._id,
+        title: test.title,
+        teacherId: test.teacherId,
+        questionCount,
+        passingMarks: test.passingMarks || (test.totalMarks * 40) / 100,
+        questionStats,
+        studentResults,
+      });
+
+      await archived.save();
+    } catch (err) {
+      // If archiving fails, log but continue with deletion to avoid leaving stale tests
+      console.error('Failed to archive test results:', err);
+    }
+
+    // Delete submissions/answers and then the test itself
+    await Submission.deleteMany({ testId: id });
     await Test.deleteOne({ _id: id });
 
-    return new Response(JSON.stringify({ message: 'Test deleted successfully' }), {
+    return new Response(JSON.stringify({ message: 'Test deleted and stats archived successfully' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

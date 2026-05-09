@@ -1,25 +1,17 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import User from '@/lib/models/User';
-import Config from '@/lib/models/Config';
 
 // Get all users
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, response } = await requireAuth(['admin', 'teacher']);
 
-    if (!session || !['admin', 'teacher'].includes(session.user.role)) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
 
-    await dbConnect();
-
     const users =
-      session.user.role === 'teacher'
+      user.role === 'teacher'
         ? await User.find({ role: 'student' }).select('-password')
         : await User.find().select('-password');
 
@@ -38,16 +30,11 @@ export async function GET(request) {
 // Add new user (admin)
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response } = await requireAuth(['admin']);
 
-    if (!session || session.user.role !== 'admin') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { name, email, password, role } = await request.json();
 

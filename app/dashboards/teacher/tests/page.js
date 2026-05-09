@@ -22,8 +22,13 @@ export default function TeacherTests() {
   const [assignLoading, setAssignLoading] = useState(false);
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'teacher') {

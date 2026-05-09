@@ -1,21 +1,14 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db/mongodb';
+import { requireAuth } from '@/lib/api-auth';
 import User from '@/lib/models/User';
 
 // Update user
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response } = await requireAuth(['admin']);
 
-    if (!session || session.user.role !== 'admin') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
     const { name, email, role, isActive } = await request.json();
@@ -48,16 +41,11 @@ export async function PATCH(request, { params }) {
 // Delete user
 export async function DELETE(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { response } = await requireAuth(['admin']);
 
-    if (!session || session.user.role !== 'admin') {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (response) {
+      return response;
     }
-
-    await dbConnect();
 
     const { id } = await params;
 

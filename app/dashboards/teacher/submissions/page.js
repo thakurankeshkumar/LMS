@@ -17,8 +17,13 @@ export default function TeacherSubmissions() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
     if (status === 'unauthenticated') {
       router.push('/auth/login');
+      return;
     }
 
     if (session?.user?.role !== 'teacher') {
@@ -48,6 +53,11 @@ export default function TeacherSubmissions() {
   if (status === 'loading' || loading) {
     return <Loading />;
   }
+
+  const getIsPassed = (submission) => {
+    const passMarks = submission?.testId?.passingMarks ?? (submission.totalMarks * 40) / 100;
+    return typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks;
+  };
 
   const pendingSubmissions = submissions.filter((s) => !s.isApproved);
   const approvedSubmissions = submissions.filter((s) => s.isApproved);
@@ -88,8 +98,9 @@ export default function TeacherSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingSubmissions.map((submission) => (
-                    <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
+                  {pendingSubmissions.map((submission) => {
+                    const isPassed = getIsPassed(submission);
+                    return <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
                       <td className="py-4 px-4 text-white">{submission.studentId.name}</td>
                       <td className="py-4 px-4 text-white">{submission.testId?.title || '—'}</td>
                       <td className="py-4 px-4 text-white">
@@ -97,9 +108,7 @@ export default function TeacherSubmissions() {
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`font-semibold ${
-                            submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'
-                          }`}
+                          className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
                         >
                           {submission.percentage.toFixed(2)}%
                         </span>
@@ -115,8 +124,8 @@ export default function TeacherSubmissions() {
                           Review
                         </Link>
                       </td>
-                    </tr>
-                  ))}
+                    </tr>;
+                  })}
                 </tbody>
               </table>
             </div>
@@ -146,8 +155,9 @@ export default function TeacherSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {approvedSubmissions.map((submission) => (
-                    <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
+                  {approvedSubmissions.map((submission) => {
+                    const isPassed = getIsPassed(submission);
+                    return <tr key={submission._id} className="border-b border-gray-700 hover:bg-gray-800">
                       <td className="py-4 px-4 text-white">{submission.studentId.name}</td>
                       <td className="py-4 px-4 text-white">{submission.testId?.title || '—'}</td>
                       <td className="py-4 px-4 text-white">
@@ -155,9 +165,7 @@ export default function TeacherSubmissions() {
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`font-semibold ${
-                            submission.percentage >= 40 ? 'text-green-500' : 'text-red-500'
-                          }`}
+                          className={`font-semibold ${isPassed ? 'text-green-500' : 'text-red-500'}`}
                         >
                           {submission.percentage.toFixed(2)}%
                         </span>
@@ -165,8 +173,8 @@ export default function TeacherSubmissions() {
                       <td className="py-4 px-4 text-gray-400">
                         {new Date(submission.approvalDate).toLocaleDateString()}
                       </td>
-                    </tr>
-                  ))}
+                    </tr>;
+                  })}
                 </tbody>
               </table>
             </div>
