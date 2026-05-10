@@ -34,6 +34,21 @@ export async function GET(request, { params }) {
       });
     }
 
+    if (user.role === 'student') {
+      const sanitized = submission.toObject();
+      const canViewAnswerReview = Boolean(sanitized?.isApproved && sanitized?.testId);
+
+      // Only reveal detailed question/correct-answer data for approved submissions on live tests.
+      if (!canViewAnswerReview && sanitized?.testId && typeof sanitized.testId === 'object') {
+        delete sanitized.testId.questions;
+      }
+
+      return new Response(JSON.stringify({ submission: sanitized, canViewAnswerReview }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ submission }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

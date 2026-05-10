@@ -13,6 +13,7 @@ export default function ResultPage({ params }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [submission, setSubmission] = useState(null);
+  const [canViewAnswerReview, setCanViewAnswerReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -34,6 +35,7 @@ export default function ResultPage({ params }) {
         }
 
         setSubmission(data.submission);
+        setCanViewAnswerReview(Boolean(data?.canViewAnswerReview));
       } catch (err) {
         setError('Failed to load result');
         console.error(err);
@@ -53,6 +55,13 @@ export default function ResultPage({ params }) {
 
   const passMarks = submission?.testId?.passingMarks ?? (submission?.totalMarks ? (submission.totalMarks * 40) / 100 : 0);
   const isPassed = submission ? (typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks) : false;
+  const score = Number(submission?.score ?? 0);
+  const totalMarks = Number(submission?.totalMarks ?? 0);
+  const percentage = Number(submission?.percentage ?? 0);
+  const timeTaken = Number(submission?.timeTaken ?? 0);
+  const answers = submission?.answers ?? [];
+  const questions = submission?.testId?.questions ?? [];
+  const showAnswerReview = submission?.isApproved && canViewAnswerReview && questions.length > 0;
 
   return (
     <div className="min-h-screen app-surface">
@@ -83,13 +92,13 @@ export default function ResultPage({ params }) {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
                     <div>
                       <p className="text-slate-400 text-sm mb-2">Your Score</p>
-                      <p className="text-4xl font-bold text-sky-300">{submission.score}</p>
-                      <p className="text-slate-400 text-sm">/ {submission.totalMarks}</p>
+                      <p className="text-4xl font-bold text-sky-300">{score}</p>
+                      <p className="text-slate-400 text-sm">/ {totalMarks}</p>
                     </div>
                     <div>
                       <p className="text-slate-400 text-sm mb-2">Percentage</p>
                       <p className={`text-4xl font-bold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}>
-                        {submission.percentage.toFixed(2)}%
+                        {percentage.toFixed(2)}%
                       </p>
                     </div>
                     <div>
@@ -112,7 +121,7 @@ export default function ResultPage({ params }) {
                 <div className="text-center py-8">
                   <p className="text-slate-400 text-lg mb-2">Your test has been submitted successfully!</p>
                   <p className="text-slate-500">Results will be displayed here once your teacher approves them.</p>
-                  <p className="text-slate-400 text-sm mt-4">Submitted on: {new Date(submission.submittedAt).toLocaleDateString()}</p>
+                  <p className="text-slate-400 text-sm mt-4">Submitted on: {submission?.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : '—'}</p>
                 </div>
               </Card>
             )}
@@ -124,24 +133,95 @@ export default function ResultPage({ params }) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="text-slate-400">Submitted At</p>
-                  <p className="text-slate-100 font-semibold">{new Date(submission.submittedAt).toLocaleDateString()}</p>
+                  <p className="text-slate-100 font-semibold">{submission?.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : '—'}</p>
                 </div>
                 <div>
                   <p className="text-slate-400">Time Taken</p>
-                  <p className="text-slate-100 font-semibold">{(submission.timeTaken / 60).toFixed(2)} min</p>
+                  <p className="text-slate-100 font-semibold">{(timeTaken / 60).toFixed(2)} min</p>
                 </div>
                 <div>
                   <p className="text-slate-400">Questions</p>
-                  <p className="text-slate-100 font-semibold">{submission.answers.length}</p>
+                  <p className="text-slate-100 font-semibold">{answers.length}</p>
                 </div>
                 {submission.isApproved && (
                   <div>
                     <p className="text-slate-400">Approved On</p>
-                    <p className="text-slate-100 font-semibold">{new Date(submission.approvalDate).toLocaleDateString()}</p>
+                    <p className="text-slate-100 font-semibold">{submission?.approvalDate ? new Date(submission.approvalDate).toLocaleDateString() : '—'}</p>
                   </div>
                 )}
               </div>
             </Card>
+            )}
+
+            {submission.isApproved && !showAnswerReview && (
+              <Card className="mb-8">
+                <h2 className="text-xl font-bold text-slate-100 mb-3">Answer Review</h2>
+                <p className="text-slate-400">
+                  Detailed answer review is unavailable because this test is no longer active.
+                </p>
+              </Card>
+            )}
+
+            {showAnswerReview && (
+              <Card className="mb-8">
+                <h2 className="text-xl font-bold text-slate-100 mb-6">Your Answers vs Correct Answers</h2>
+
+                {answers.map((answer, index) => {
+                  const question = questions[index];
+                  const selectedOption = answer?.selectedOption;
+                  const correctOption = question?.correctAnswer;
+
+                  return (
+                    <div key={`${submission?._id || 'submission'}-answer-${index}`} className="mb-6 border-b border-slate-800 pb-6 last:border-b-0">
+                      <p className="mb-1 text-sm text-slate-400">Question {index + 1}</p>
+                      <p className="mb-3 font-semibold text-slate-100">{question?.question || 'Question text unavailable'}</p>
+
+                      <div className="space-y-2">
+                        {(question?.options ?? []).map((option, optionIndex) => {
+                          const isSelected = optionIndex === selectedOption;
+                          const isCorrect = optionIndex === correctOption;
+
+                          return (
+                            <div
+                              key={`${submission?._id || 'submission'}-${index}-${optionIndex}`}
+                              className={`rounded-lg border p-3 ${
+                                isSelected && isCorrect
+                                  ? 'border-green-500 bg-green-900/20'
+                                  : isSelected
+                                  ? 'border-red-500 bg-red-900/20'
+                                  : isCorrect
+                                  ? 'border-emerald-500 bg-emerald-900/10'
+                                  : 'border-slate-700 bg-slate-950/55'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`text-sm font-semibold ${
+                                    isSelected && isCorrect
+                                      ? 'text-green-300'
+                                      : isSelected
+                                      ? 'text-red-300'
+                                      : isCorrect
+                                      ? 'text-emerald-300'
+                                      : 'text-slate-400'
+                                  }`}
+                                >
+                                  {isSelected ? 'Your answer' : ''} {isCorrect ? 'Correct answer' : ''}
+                                </span>
+                                <span className="text-slate-100">{option}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {answers.length === 0 && (
+                  <p className="text-slate-400">No answer data is available for this submission.</p>
+                )}
+              </Card>
             )}
 
             {submission.remarks && (
