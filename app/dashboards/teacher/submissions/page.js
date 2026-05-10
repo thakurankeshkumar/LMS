@@ -55,12 +55,15 @@ export default function TeacherSubmissions() {
   }
 
   const getIsPassed = (submission) => {
-    const passMarks = submission?.testId?.passingMarks ?? (submission.totalMarks * 40) / 100;
-    return typeof submission.isPassed === 'boolean' ? submission.isPassed : submission.score >= passMarks;
+    const totalMarks = Number(submission?.totalMarks ?? 0);
+    const passMarks = submission?.testId?.passingMarks ?? (totalMarks * 40) / 100;
+    const score = Number(submission?.score ?? 0);
+    return typeof submission?.isPassed === 'boolean' ? submission.isPassed : score >= passMarks;
   };
 
-  const pendingSubmissions = submissions.filter((s) => !s.isApproved);
-  const approvedSubmissions = submissions.filter((s) => s.isApproved);
+  const safeSubmissions = Array.isArray(submissions) ? submissions : [];
+  const pendingSubmissions = safeSubmissions.filter((s) => !s?.isApproved);
+  const approvedSubmissions = safeSubmissions.filter((s) => s?.isApproved);
 
   return (
     <div className="min-h-screen app-surface">
@@ -98,27 +101,36 @@ export default function TeacherSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingSubmissions.map((submission) => {
+                  {pendingSubmissions.map((submission, index) => {
                     const isPassed = getIsPassed(submission);
-                    return <tr key={submission._id} className="border-b border-slate-800 hover:bg-slate-900">
-                      <td className="py-4 px-4 text-slate-100">{submission.studentId.name}</td>
-                      <td className="py-4 px-4 text-slate-100">{submission.testId?.title || '—'}</td>
+                    const studentName = submission?.studentId?.name || 'Unknown Student';
+                    const testTitle = submission?.testId?.title || 'Untitled Test';
+                    const score = Number(submission?.score ?? 0);
+                    const totalMarks = Number(submission?.totalMarks ?? 0);
+                    const percentage = Number(submission?.percentage ?? 0);
+                    const submittedDate = submission?.submittedAt
+                      ? new Date(submission.submittedAt).toLocaleDateString()
+                      : '—';
+
+                    return <tr key={submission?._id || `pending-${index}`} className="border-b border-slate-800 hover:bg-slate-900">
+                      <td className="py-4 px-4 text-slate-100">{studentName}</td>
+                      <td className="py-4 px-4 text-slate-100">{testTitle}</td>
                       <td className="py-4 px-4 text-slate-100">
-                        {submission.score}/{submission.totalMarks}
+                        {score}/{totalMarks}
                       </td>
                       <td className="py-4 px-4">
                         <span
                           className={`font-semibold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}
                         >
-                          {submission.percentage.toFixed(2)}%
+                          {percentage.toFixed(2)}%
                         </span>
                       </td>
                       <td className="py-4 px-4 text-slate-400">
-                        {new Date(submission.submittedAt).toLocaleDateString()}
+                        {submittedDate}
                       </td>
                       <td className="py-4 px-4">
                         <Link
-                          href={`/dashboards/teacher/submissions/${submission._id}`}
+                          href={submission?._id ? `/dashboards/teacher/submissions/${submission._id}` : '/dashboards/teacher/submissions'}
                           className="text-sky-300 hover:text-blue-400"
                         >
                           Review
@@ -155,23 +167,32 @@ export default function TeacherSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {approvedSubmissions.map((submission) => {
+                  {approvedSubmissions.map((submission, index) => {
                     const isPassed = getIsPassed(submission);
-                    return <tr key={submission._id} className="border-b border-slate-800 hover:bg-slate-900">
-                      <td className="py-4 px-4 text-slate-100">{submission.studentId.name}</td>
-                      <td className="py-4 px-4 text-slate-100">{submission.testId?.title || '—'}</td>
+                    const studentName = submission?.studentId?.name || 'Unknown Student';
+                    const testTitle = submission?.testId?.title || 'Untitled Test';
+                    const score = Number(submission?.score ?? 0);
+                    const totalMarks = Number(submission?.totalMarks ?? 0);
+                    const percentage = Number(submission?.percentage ?? 0);
+                    const approvalDate = submission?.approvalDate
+                      ? new Date(submission.approvalDate).toLocaleDateString()
+                      : '—';
+
+                    return <tr key={submission?._id || `approved-${index}`} className="border-b border-slate-800 hover:bg-slate-900">
+                      <td className="py-4 px-4 text-slate-100">{studentName}</td>
+                      <td className="py-4 px-4 text-slate-100">{testTitle}</td>
                       <td className="py-4 px-4 text-slate-100">
-                        {submission.score}/{submission.totalMarks}
+                        {score}/{totalMarks}
                       </td>
                       <td className="py-4 px-4">
                         <span
                           className={`font-semibold ${isPassed ? 'text-emerald-300' : 'text-red-500'}`}
                         >
-                          {submission.percentage.toFixed(2)}%
+                          {percentage.toFixed(2)}%
                         </span>
                       </td>
                       <td className="py-4 px-4 text-slate-400">
-                        {new Date(submission.approvalDate).toLocaleDateString()}
+                        {approvalDate}
                       </td>
                     </tr>;
                   })}

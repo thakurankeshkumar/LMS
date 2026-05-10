@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import Card from '@/app/components/Card';
 import Button from '@/app/components/Button';
-import Input from '@/app/components/Input';
 import Loading from '@/app/components/Loading';
 import Alert from '@/app/components/Alert';
 import { useToast } from '@/app/components/Feedback';
@@ -54,9 +53,18 @@ export default function ReviewSubmissionPage({ params }) {
         setSubmission(data.submission);
 
         // Fetch test details
-        const testResponse = await fetch(`/api/tests/${data.submission.testId._id}`);
+        const testId = data?.submission?.testId?._id;
+        if (!testId) {
+          setTest({
+            title: data?.submission?.testId?.title || 'Untitled test',
+            questions: [],
+          });
+          return;
+        }
+
+        const testResponse = await fetch(`/api/tests/${testId}`);
         const testData = await testResponse.json();
-        setTest(testData.test);
+        setTest(testData?.test || { title: 'Untitled test', questions: [] });
       } catch (err) {
         setError('Failed to load submission');
         console.error(err);
@@ -111,39 +119,39 @@ export default function ReviewSubmissionPage({ params }) {
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {error && <Alert type="error" message={error} />}
 
-        {submission && test && (
+        {submission && (
           <>
             <PageHeader
               eyebrow="Submission review"
               title="Review Submission"
-              description={`${submission.studentId.name} - ${submission.testId?.title || 'Untitled test'}`}
+              description={`${submission?.studentId?.name || 'Unknown Student'} - ${submission?.testId?.title || test?.title || 'Untitled test'}`}
             />
 
             {/* Score Card */}
             <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Score" value={`${submission.score}/${submission.totalMarks}`} tone="blue" />
-              <StatCard label="Percentage" value={`${submission.percentage.toFixed(2)}%`} tone={isPassed ? 'green' : 'red'} />
+              <StatCard label="Score" value={`${Number(submission?.score ?? 0)}/${Number(submission?.totalMarks ?? 0)}`} tone="blue" />
+              <StatCard label="Percentage" value={`${Number(submission?.percentage ?? 0).toFixed(2)}%`} tone={isPassed ? 'green' : 'red'} />
               <StatCard label="Result" value={isPassed ? 'Passed' : 'Failed'} tone={isPassed ? 'green' : 'red'} />
-              <StatCard label="Time Taken" value={`${(submission.timeTaken / 60).toFixed(2)} min`} tone="slate" />
+              <StatCard label="Time Taken" value={`${(Number(submission?.timeTaken ?? 0) / 60).toFixed(2)} min`} tone="slate" />
               </div>
 
             {/* Answers */}
             <Card className="mb-8">
               <h2 className="text-xl font-bold text-slate-100 mb-6">Answers</h2>
 
-              {submission.answers.map((answer, index) => {
-                const question = test.questions[index];
+              {(submission?.answers ?? []).map((answer, index) => {
+                const question = test?.questions?.[index];
                 const isCorrect = answer.isCorrect;
 
                 return (
                   <div key={index} className="mb-6 pb-6 border-b border-slate-800 last:border-b-0">
                     <div className="mb-3">
                       <p className="text-slate-400 text-sm">Question {index + 1}</p>
-                      <p className="text-slate-100 font-semibold">{question.question}</p>
+                      <p className="text-slate-100 font-semibold">{question?.question || 'Question text unavailable'}</p>
                     </div>
 
                     <div className="space-y-2 mb-3">
-                      {question.options.map((option, optionIndex) => (
+                      {(question?.options ?? []).map((option, optionIndex) => (
                         <div
                           key={optionIndex}
                           className={`p-3 rounded-lg border ${
@@ -151,7 +159,7 @@ export default function ReviewSubmissionPage({ params }) {
                               ? isCorrect
                                 ? 'border-green-500 bg-green-900 bg-opacity-20'
                                 : 'border-red-500 bg-red-900 bg-opacity-20'
-                              : optionIndex === question.correctAnswer
+                                : optionIndex === question?.correctAnswer
                               ? 'border-green-500 bg-green-900 bg-opacity-10'
                               : 'border-slate-700 bg-slate-950/55'
                           }`}
@@ -163,12 +171,12 @@ export default function ReviewSubmissionPage({ params }) {
                                   ? isCorrect
                                     ? 'text-green-400'
                                     : 'text-red-400'
-                                  : optionIndex === question.correctAnswer
+                                  : optionIndex === question?.correctAnswer
                                   ? 'text-green-400'
                                   : 'text-slate-400'
                               }`}
                             >
-                              {optionIndex === answer.selectedOption && '👤'} {optionIndex === question.correctAnswer && '✓'}
+                              {optionIndex === answer?.selectedOption && '👤'} {optionIndex === question?.correctAnswer && '✓'}
                             </span>
                             <span className="text-slate-100">{option}</span>
                           </div>
@@ -176,7 +184,7 @@ export default function ReviewSubmissionPage({ params }) {
                       ))}
                     </div>
 
-                    {question.explanation && (
+                    {question?.explanation && (
                       <div className="bg-slate-950/55 p-3 rounded-lg">
                         <p className="text-slate-400 text-sm">Explanation:</p>
                         <p className="text-slate-100">{question.explanation}</p>
@@ -185,6 +193,10 @@ export default function ReviewSubmissionPage({ params }) {
                   </div>
                 );
               })}
+
+              {(submission?.answers?.length ?? 0) === 0 && (
+                <p className="text-slate-400">No answer data is available for this submission.</p>
+              )}
             </Card>
 
             {/* Approval Section */}
@@ -226,7 +238,7 @@ export default function ReviewSubmissionPage({ params }) {
               <Card>
                 <div className="text-center">
                   <p className="text-green-400 font-semibold mb-2">✓ Already Approved</p>
-                  <p className="text-slate-400">Approved on {new Date(submission.approvalDate).toLocaleDateString()}</p>
+                  <p className="text-slate-400">Approved on {submission?.approvalDate ? new Date(submission.approvalDate).toLocaleDateString() : '—'}</p>
                   {submission.remarks && (
                     <p className="text-slate-300 mt-4">{submission.remarks}</p>
                   )}

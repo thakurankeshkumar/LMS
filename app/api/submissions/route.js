@@ -148,11 +148,16 @@ export async function GET(request) {
         .populate('testId', 'title passingMarks totalMarks')
         .populate('studentId', 'name email')
         .sort('-submittedAt');
+
+      // Defensive filter: populated refs can be null if related docs were deleted.
+      submissions = submissions.filter((s) => s?.studentId);
     } else if (user.role === 'admin') {
       submissions = await Submission.find()
         .populate('testId', 'title passingMarks totalMarks')
         .populate('studentId', 'name email')
         .sort('-submittedAt');
+
+      submissions = submissions.filter((s) => s?.studentId);
     }
 
     return new Response(JSON.stringify({ submissions }), {

@@ -153,6 +153,9 @@ export default function AdminUsers() {
     return <Loading />;
   }
 
+  const currentUserId = session?.user?.id;
+  const safeUsers = Array.isArray(users) ? users.filter(Boolean) : [];
+
   return (
     <div className="min-h-screen app-surface">
       <Navbar role="admin" />
@@ -167,7 +170,7 @@ export default function AdminUsers() {
 
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-        {users.length === 0 ? (
+        {safeUsers.length === 0 ? (
           <EmptyState title="No users found" description="Add a student, teacher, or admin account to begin operating the LMS." action={<Button onClick={() => setShowModal(true)}>Add User</Button>} />
         ) : (
         <Card className="p-0">
@@ -184,35 +187,35 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user._id} className="border-b border-slate-800 hover:bg-slate-950/55">
-                  <td className="py-4 px-4 text-slate-100">{user.name}</td>
-                  <td className="py-4 px-4 text-slate-100">{user.email}</td>
+              {safeUsers.map((user, index) => (
+                <tr key={user?._id || `user-${index}`} className="border-b border-slate-800 hover:bg-slate-950/55">
+                  <td className="py-4 px-4 text-slate-100">{user?.name || 'Unknown User'}</td>
+                  <td className="py-4 px-4 text-slate-100">{user?.email || 'No email'}</td>
                   <td className="py-4 px-4">
-                    <Badge tone={user.role === 'admin' ? 'blue' : user.role === 'teacher' ? 'teal' : 'slate'}>{user.role}</Badge>
+                    <Badge tone={user?.role === 'admin' ? 'blue' : user?.role === 'teacher' ? 'teal' : 'slate'}>{user?.role || 'unknown'}</Badge>
                   </td>
                   <td className="py-4 px-4">
-                    <Badge tone={user.isActive ? 'green' : 'red'}>{user.isActive ? 'Active' : 'Inactive'}</Badge>
+                    <Badge tone={user?.isActive ? 'green' : 'red'}>{user?.isActive ? 'Active' : 'Inactive'}</Badge>
                   </td>
                   <td className="py-4 px-4 text-slate-400">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => handleToggleUserStatus(user)}
-                      disabled={user._id === session.user.id}
+                      disabled={!user?._id || user._id === currentUserId}
                       className={`rounded-md px-3 py-2 text-sm font-semibold focus-ring disabled:cursor-not-allowed disabled:opacity-45 ${
-                        user.isActive
+                        user?.isActive
                           ? 'text-amber-200 hover:bg-amber-400/10'
                           : 'text-emerald-200 hover:bg-emerald-400/10'
                       }`}
                     >
-                      {user.isActive ? 'Block' : 'Unblock'}
+                      {user?.isActive ? 'Block' : 'Unblock'}
                     </button>
                     <button
-                      onClick={() => handleDeleteUser(user._id)}
-                      disabled={user._id === session.user.id}
+                      onClick={() => user?._id && handleDeleteUser(user._id)}
+                      disabled={!user?._id || user._id === currentUserId}
                       className="rounded-md px-3 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-400/10 focus-ring disabled:cursor-not-allowed disabled:opacity-45"
                     >
                       Delete

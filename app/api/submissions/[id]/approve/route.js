@@ -24,8 +24,9 @@ export async function POST(request, { params }) {
     }
 
     // Verify teacher owns the test
-    const test = await Test.findById(submission.testId);
-    if (test.teacherId.toString() !== user._id.toString()) {
+    const testRefId = submission?.testId?._id || submission?.testId;
+    const test = testRefId ? await Test.findById(testRefId) : null;
+    if (!test || test.teacherId.toString() !== user._id.toString()) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

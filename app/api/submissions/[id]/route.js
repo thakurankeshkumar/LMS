@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
     // Check authorization
     if (
       user.role === 'student' &&
-      submission.studentId._id.toString() !== user._id.toString()
+      submission?.studentId?._id?.toString() !== user._id.toString()
     ) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
