@@ -113,6 +113,7 @@ export default function TeacherTests() {
   const handleAssignClick = async (testId) => {
     setSelectedTestId(testId);
     setShowAssignModal(true);
+    setSelectedStudents([]);
     try {
       const response = await fetch('/api/users');
       const data = await response.json();
@@ -155,6 +156,17 @@ export default function TeacherTests() {
     } finally {
       setAssignLoading(false);
     }
+  };
+
+  const allStudentsSelected = students.length > 0 && selectedStudents.length === students.length;
+
+  const toggleSelectAllStudents = () => {
+    if (allStudentsSelected) {
+      setSelectedStudents([]);
+      return;
+    }
+
+    setSelectedStudents(students.map((student) => student._id));
   };
 
   if (status === 'loading' || loading) {
@@ -227,6 +239,15 @@ export default function TeacherTests() {
           </div>
         }
       >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="text-sm text-slate-400">
+                {selectedStudents.length} of {students.length} students selected
+              </p>
+              <Button type="button" variant="secondary" onClick={toggleSelectAllStudents} disabled={students.length === 0}>
+                {allStudentsSelected ? 'Clear Selection' : 'Select All'}
+              </Button>
+            </div>
+
             <div className="mb-4 max-h-60 space-y-2 overflow-y-auto rounded-lg border border-slate-800 p-3">
               {students.length === 0 ? (
                 <p className="text-slate-400 text-sm">No students found</p>

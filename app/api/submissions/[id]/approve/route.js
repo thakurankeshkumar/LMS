@@ -5,7 +5,7 @@ import Test from '@/lib/models/Test';
 // Approve result (teacher)
 export async function POST(request, { params }) {
   try {
-    const { user, response } = await requireAuth(['teacher']);
+    const { user, response } = await requireAuth(['teacher', 'admin']);
 
     if (response) {
       return response;
@@ -23,10 +23,10 @@ export async function POST(request, { params }) {
       });
     }
 
-    // Verify teacher owns the test
+    // Verify teacher owns the test unless the approver is an admin.
     const testRefId = submission?.testId?._id || submission?.testId;
     const test = testRefId ? await Test.findById(testRefId) : null;
-    if (!test || test.teacherId.toString() !== user._id.toString()) {
+    if (!test || (user.role !== 'admin' && test.teacherId.toString() !== user._id.toString())) {
       return new Response(JSON.stringify({ message: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

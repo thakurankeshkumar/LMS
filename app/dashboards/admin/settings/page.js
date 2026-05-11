@@ -19,6 +19,7 @@ const defaultConfig = {
   defaultTestDuration: 30,
   defaultPassingPercentage: 40,
   defaultNegativeMarking: false,
+  studentAnswerReviewEnabled: true,
 };
 
 function ToggleRow({ title, description, checked, onChange, disabled, tone = 'sky' }) {
@@ -244,6 +245,26 @@ export default function AdminSettings() {
                   disabled={saving}
                   tone="sky"
                 />
+                <ToggleRow
+                  title="Student Answer Review"
+                  description={config.studentAnswerReviewEnabled ? 'Approved submissions can show students their answers alongside the correct answers.' : 'Students will only see summary scores after approval.'}
+                  checked={config.studentAnswerReviewEnabled}
+                  onChange={() => setConfig({ ...config, studentAnswerReviewEnabled: !config.studentAnswerReviewEnabled })}
+                  disabled={saving}
+                  tone="emerald"
+                />
+              </div>
+            </Card>
+
+            <Card>
+              <h2 className="mb-5 text-2xl font-bold text-slate-100">Quick Actions</h2>
+              <div className="space-y-3 text-sm leading-6 text-slate-400">
+                <p>Use these controls to keep the LMS clear and consistent for students while still giving admins a full review workflow.</p>
+                <ul className="space-y-2 pl-4">
+                  <li>• Turn on maintenance mode during scheduled updates.</li>
+                  <li>• Disable public signup when onboarding is handled manually.</li>
+                  <li>• Keep answer review enabled so approved submissions remain educational for students.</li>
+                </ul>
               </div>
             </Card>
 

@@ -11,6 +11,7 @@ function serializeConfig(config) {
     defaultTestDuration: config?.defaultTestDuration ?? 30,
     defaultPassingPercentage: config?.defaultPassingPercentage ?? 40,
     defaultNegativeMarking: config?.defaultNegativeMarking ?? false,
+    studentAnswerReviewEnabled: config?.studentAnswerReviewEnabled ?? true,
   };
 }
 
@@ -49,7 +50,7 @@ export async function PUT(request) {
       config = new Config();
     }
 
-    const booleanFields = ['publicSignup', 'maintenanceMode', 'defaultNegativeMarking'];
+    const booleanFields = ['publicSignup', 'maintenanceMode', 'defaultNegativeMarking', 'studentAnswerReviewEnabled'];
     booleanFields.forEach((field) => {
       if (body[field] !== undefined) config[field] = Boolean(body[field]);
     });

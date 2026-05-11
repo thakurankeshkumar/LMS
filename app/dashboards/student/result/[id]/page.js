@@ -14,6 +14,7 @@ export default function ResultPage({ params }) {
   const router = useRouter();
   const [submission, setSubmission] = useState(null);
   const [canViewAnswerReview, setCanViewAnswerReview] = useState(false);
+  const [answerReviewEnabled, setAnswerReviewEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -26,16 +27,21 @@ export default function ResultPage({ params }) {
   useEffect(() => {
     const fetchResult = async () => {
       try {
-        const response = await fetch(`/api/submissions/${id}`);
-        const data = await response.json();
+        const [submissionResponse, configResponse] = await Promise.all([
+          fetch(`/api/submissions/${id}`),
+          fetch('/api/users/config'),
+        ]);
+        const data = await submissionResponse.json();
+        const configData = await configResponse.json();
 
-        if (!response.ok) {
+        if (!submissionResponse.ok) {
           setError(data.message || 'Failed to load result');
           return;
         }
 
         setSubmission(data.submission);
         setCanViewAnswerReview(Boolean(data?.canViewAnswerReview));
+        setAnswerReviewEnabled(configData?.config?.studentAnswerReviewEnabled ?? true);
       } catch (err) {
         setError('Failed to load result');
         console.error(err);
@@ -61,7 +67,7 @@ export default function ResultPage({ params }) {
   const timeTaken = Number(submission?.timeTaken ?? 0);
   const answers = submission?.answers ?? [];
   const questions = submission?.testId?.questions ?? [];
-  const showAnswerReview = submission?.isApproved && canViewAnswerReview && questions.length > 0;
+  const showAnswerReview = submission?.isApproved && canViewAnswerReview && answerReviewEnabled && questions.length > 0;
 
   return (
     <div className="min-h-screen app-surface">
@@ -157,7 +163,7 @@ export default function ResultPage({ params }) {
               <Card className="mb-8">
                 <h2 className="text-xl font-bold text-slate-100 mb-3">Answer Review</h2>
                 <p className="text-slate-400">
-                  Detailed answer review is unavailable because this test is no longer active.
+                  Detailed answer review is unavailable because it is disabled or this test is no longer active.
                 </p>
               </Card>
             )}
